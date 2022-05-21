@@ -12,7 +12,6 @@ import {TokenUtils} from "./TokenUtils";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {expect} from "chai";
 import {RunHelper} from "../scripts/utils/tools/RunHelper";
-import {MintHelperUtils} from "./MintHelperUtils";
 import {CoreContractsWrapper} from "./CoreContractsWrapper";
 import {DeployerUtilsLocal} from "../scripts/deploy/DeployerUtilsLocal";
 import {Misc} from "../scripts/utils/tools/Misc";
@@ -185,69 +184,6 @@ export class UniswapUtils {
     return [tokenStacked, oppositeToken, oppositeTokenStacked, price];
   }
 
-  public static async createPairForRewardToken(
-    signer: SignerWithAddress,
-    core: CoreContractsWrapper,
-    amount: string
-  ) {
-    const usdc = await DeployerUtilsLocal.getUSDCAddress();
-    await TokenUtils.getToken(usdc, signer.address, utils.parseUnits(amount, 6))
-    const rewardTokenAddress = core.rewardToken.address;
-
-    const usdcBal = await TokenUtils.balanceOf(usdc, signer.address);
-    console.log('USDC bought', usdcBal.toString());
-    expect(+utils.formatUnits(usdcBal, 6)).is.greaterThanOrEqual(+amount);
-
-    await MintHelperUtils.mint(core.controller, core.announcer, (+amount * 2).toString(), signer.address);
-
-    const tokenBal = await TokenUtils.balanceOf(rewardTokenAddress, signer.address);
-    console.log('Token minted', tokenBal.toString());
-    expect(+utils.formatUnits(tokenBal, 18)).is.greaterThanOrEqual(+amount);
-
-    const factory = await DeployerUtilsLocal.getDefaultNetworkFactory();
-    const lp = await UniswapUtils.addLiquidity(
-      signer,
-      rewardTokenAddress,
-      usdc,
-      utils.parseUnits(amount, 18).toString(),
-      utils.parseUnits(amount, 6).toString(),
-      factory,
-      await DeployerUtilsLocal.getRouterByFactory(factory)
-    );
-    await core.feeRewardForwarder.addLargestLps([core.rewardToken.address], [lp]);
-    return lp;
-  }
-
-  public static async createPairForRewardTokenWithBuy(
-    signer: SignerWithAddress,
-    core: CoreContractsWrapper,
-    amount: string
-  ) {
-    const usdc = await DeployerUtilsLocal.getUSDCAddress();
-    await TokenUtils.getToken(usdc, signer.address, utils.parseUnits(amount, 6))
-    const rewardTokenAddress = core.rewardToken.address;
-
-    const usdcBal = await TokenUtils.balanceOf(usdc, signer.address);
-    console.log('USDC bought', usdcBal.toString());
-    expect(+utils.formatUnits(usdcBal, 6)).is.greaterThanOrEqual(+amount);
-
-    await MintHelperUtils.mint(core.controller, core.announcer, amount, signer.address);
-
-    const tokenBal = await TokenUtils.balanceOf(rewardTokenAddress, signer.address);
-    console.log('Token minted', tokenBal.toString());
-    expect(+utils.formatUnits(tokenBal, 18)).is.greaterThanOrEqual(+amount);
-
-    return UniswapUtils.addLiquidity(
-      signer,
-      rewardTokenAddress,
-      usdc,
-      utils.parseUnits(amount, 18).toString(),
-      utils.parseUnits(amount, 6).toString(),
-      await DeployerUtilsLocal.getDefaultNetworkFactory(),
-      await DeployerUtilsLocal.getRouterByFactory(await DeployerUtilsLocal.getDefaultNetworkFactory())
-    );
-  }
-
   public static async createTetuUsdc(
     signer: SignerWithAddress,
     core: CoreContractsWrapper,
@@ -260,13 +196,7 @@ export class UniswapUtils {
     const usdcBal = await TokenUtils.balanceOf(usdc, signer.address);
     console.log('USDC bought', usdcBal.toString());
     expect(+utils.formatUnits(usdcBal, 6)).is.greaterThanOrEqual(+amount);
-
-    if (tetu === await DeployerUtilsLocal.getTETUAddress()) {
-      await TokenUtils.getToken(tetu, signer.address, utils.parseUnits(amount));
-    } else {
-      await MintHelperUtils.mint(core.controller, core.announcer, amount, signer.address);
-    }
-
+    await TokenUtils.getToken(tetu, signer.address, utils.parseUnits(amount));
 
     const tokenBal = await TokenUtils.balanceOf(tetu, signer.address);
     console.log('Token minted', tokenBal.toString());

@@ -14,8 +14,9 @@ import {
 } from "../../../typechain";
 import {VaultUtils} from "../../VaultUtils";
 import {defaultAbiCoder} from "@ethersproject/abi";
-import {parseUnits} from "ethers/lib/utils";
+import {formatUnits, parseUnits} from "ethers/lib/utils";
 import {TimeUtils} from "../../TimeUtils";
+import {Misc} from "../../../scripts/utils/tools/Misc";
 
 const {expect} = chai;
 chai.use(chaiAsPromised);
@@ -50,6 +51,9 @@ export class BalStakingDoHardWork extends DoHardWorkLoopBase {
     const depositorAdr = await StrategyBalStaking__factory.connect(this.strategy.address, this.signer).depositor()
     const depositor = BalDepositor__factory.connect(depositorAdr, this.signer);
 
+    const ethBalance0 = await TokenUtils.balanceOf(EthAddresses.WETH_TOKEN, this.signer.address);
+    await TokenUtils.transfer(EthAddresses.WETH_TOKEN, this.signer, Misc.ZERO_ADDRESS, ethBalance0.toString());
+
     await IBVault__factory.connect(EthAddresses.BALANCER_VAULT, this.signer).exitPool(
       EthAddresses.BALANCER_BAL_WETH_ID,
       this.signer.address,
@@ -64,12 +68,19 @@ export class BalStakingDoHardWork extends DoHardWorkLoopBase {
 
     const balBalance = await TokenUtils.balanceOf(EthAddresses.BAL_TOKEN, this.signer.address);
     const ethBalance = await TokenUtils.balanceOf(EthAddresses.WETH_TOKEN, this.signer.address);
-    console.log('balBalance', balBalance.toString());
-    console.log('ethBalance', ethBalance.toString());
+    console.log('balBalance', formatUnits(balBalance));
+    console.log('ethBalance', formatUnits(ethBalance));
     await TokenUtils.transfer(EthAddresses.BAL_TOKEN, this.signer, depositorAdr, balBalance.toString());
     await TokenUtils.transfer(EthAddresses.WETH_TOKEN, this.signer, depositorAdr, ethBalance.toString());
 
     await depositor.depositBridgedAssets('0x');
+
+    const balBalance1 = await TokenUtils.balanceOf(EthAddresses.BAL_TOKEN, depositor.address);
+    const ethBalance1 = await TokenUtils.balanceOf(EthAddresses.WETH_TOKEN, depositor.address);
+    console.log('balBalance1', formatUnits(balBalance1));
+    console.log('ethBalance1', formatUnits(ethBalance1));
+    expect(balBalance1).eq(0);
+    expect(ethBalance1).eq(0);
 
     const depositorBalance = await this.vault.underlyingBalanceWithInvestmentForHolder(depositor.address);
     expect(+utils.formatUnits(depositorBalance)).is.approximately(+utils.formatUnits(this.userDeposited.div(2)), +utils.formatUnits(this.userDeposited.div(2)) * 0.00001);

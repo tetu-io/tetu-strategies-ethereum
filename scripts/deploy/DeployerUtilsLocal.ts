@@ -26,15 +26,17 @@ import {
   IRewardToken__factory,
   ISmartVault,
   ISmartVault__factory,
-  IStrategy, IStrategy__factory,
+  IStrategy,
   IStrategySplitter,
   IStrategySplitter__factory,
   IVaultController,
   IVaultController__factory,
+  NoopStrategy, PriceCalculator,
   TetuProxyControlled,
   TetuProxyControlled__factory,
 } from "../../typechain";
 import {EthAddresses} from "../addresses/EthAddresses";
+import {expect} from "chai";
 
 // tslint:disable-next-line:no-var-requires
 const hre = require("hardhat");
@@ -480,9 +482,23 @@ export class DeployerUtilsLocal {
       throw Error('No config for ' + net.chainId);
     }
 
-    const ps = ISmartVault__factory.connect(core.psVault, signer);
-    // const str = await ps.strategy();
-    const str = Misc.ZERO_ADDRESS; // todo
+    let psAdr = core.psVault;
+
+    if (psAdr === Misc.ZERO_ADDRESS) {
+      const [vaultLogic, psVault, strategy] = await DeployerUtilsLocal.deployDefaultNoopStrategyAndVault(
+        signer,
+        IController__factory.connect(core.controller, signer),
+        IVaultController__factory.connect(core.vaultController, signer),
+        core.rewardToken,
+        Misc.ZERO_ADDRESS
+      );
+      await RunHelper.runAndWait(() => IController__factory.connect(core.controller, signer)
+        .setPsVault(psVault.address));
+      psAdr = psVault.address;
+    }
+
+    const ps = ISmartVault__factory.connect(psAdr, signer);
+    const str = await ps.strategy();
     return new CoreContractsWrapper(
       IController__factory.connect(core.controller, signer),
       '',
@@ -506,6 +522,27 @@ export class DeployerUtilsLocal {
 
   }
 
+  public static async deployPriceCalculatorEthereum(signer: SignerWithAddress, controller: string, wait = false): Promise<[PriceCalculator, TetuProxyControlled, PriceCalculator]> {
+    const logic = await DeployerUtilsLocal.deployContract(signer, "PriceCalculator") as PriceCalculator;
+    const proxy = await DeployerUtilsLocal.deployContract(signer, "TetuProxyControlled", logic.address) as TetuProxyControlled;
+    const calculator = logic.attach(proxy.address) as PriceCalculator;
+    await calculator.initialize(controller);
+
+    await RunHelper.runAndWait(() => calculator.addKeyTokens([
+      EthAddresses.USDC_TOKEN,
+      EthAddresses.WETH_TOKEN,
+      EthAddresses.DAI_TOKEN,
+      EthAddresses.USDT_TOKEN,
+      EthAddresses.WBTC_TOKEN,
+    ]), true, wait);
+
+    await RunHelper.runAndWait(() => calculator.setDefaultToken(EthAddresses.USDC_TOKEN), true, wait);
+    await RunHelper.runAndWait(() => calculator.addSwapPlatform(EthAddresses.UNISWAP_FACTORY, "Uniswap V2"), true, wait);
+
+    expect(await calculator.keyTokensSize()).is.not.eq(0);
+    return [calculator, proxy, logic];
+  }
+
   public static async getToolsAddressesWrapper(signer: SignerWithAddress): Promise<ToolsContractsWrapper> {
     const net = await ethers.provider.getNetwork();
     log.info('network ' + net.chainId);
@@ -513,8 +550,17 @@ export class DeployerUtilsLocal {
     if (!tools) {
       throw Error('No config for ' + net.chainId);
     }
+
+    let calc = tools.calculator;
+
+    if (calc === Misc.ZERO_ADDRESS) {
+      const core = await Addresses.CORE.get(net.chainId + '');
+      const calcCtr = (await DeployerUtilsLocal.deployPriceCalculatorEthereum(signer, core?.controller || ''))[0];
+      calc = calcCtr.address;
+    }
+
     return new ToolsContractsWrapper(
-      IPriceCalculator__factory.connect(tools.calculator, signer),
+      IPriceCalculator__factory.connect(calc, signer),
     );
 
   }

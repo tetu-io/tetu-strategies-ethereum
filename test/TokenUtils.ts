@@ -1,6 +1,11 @@
 import {ethers} from "hardhat";
-import {ERC20__factory, IERC721Enumerable__factory, IWmatic, IWmatic__factory} from "../typechain";
-import {BigNumber, utils} from "ethers";
+import {
+  ERC20__factory,
+  IERC721Enumerable__factory,
+  IRewardToken__factory,
+  IWmatic__factory
+} from "../typechain";
+import {BigNumber} from "ethers";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
@@ -95,12 +100,21 @@ export class TokenUtils {
 
   public static async getToken(token: string, to: string, amount?: BigNumber) {
     const start = Date.now();
-    console.log('transfer token from biggest holder', token, amount?.toString());
 
     if (token.toLowerCase() === await DeployerUtilsLocal.getNetworkTokenAddress()) {
+      console.log('mint weth');
       await IWmatic__factory.connect(token, await DeployerUtilsLocal.impersonate(to)).deposit({value: amount});
       return amount;
     }
+
+    if (token.toLowerCase() === EthAddresses.TETU_TOKEN) {
+      console.log('mint tetu');
+      const minter = await DeployerUtilsLocal.impersonate('0x765277EebeCA2e31912C9946eAe1021199B39C61');
+      await IRewardToken__factory.connect(token, minter).mint(to, amount || parseUnits('100000000'));
+      return amount;
+    }
+
+    console.log('transfer token from biggest holder', token, amount?.toString());
 
     const holder = TokenUtils.TOKEN_HOLDERS.get(token.toLowerCase()) as string;
     if (!holder) {

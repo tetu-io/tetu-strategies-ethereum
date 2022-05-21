@@ -50,7 +50,7 @@ export class StrategyTestUtils {
     const strategy = data[2] as IStrategy;
 
     const rewardTokenLp = await UniswapUtils.createTetuUsdc(
-      signer, core, "1000000"
+      signer, core, "10000"
     );
     log.info("LP created");
 
