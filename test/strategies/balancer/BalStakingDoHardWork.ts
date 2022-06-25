@@ -42,6 +42,10 @@ export class BalStakingDoHardWork extends DoHardWorkLoopBase {
     await TokenUtils.getToken(EthAddresses.BAL_TOKEN, this.signer.address, amount);
     await IERC20__factory.connect(EthAddresses.BAL_TOKEN, this.signer).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amount);
     await IFeeDistributor__factory.connect(EthAddresses.BALANCER_FEE_DISTRIBUTOR, this.signer).depositToken(EthAddresses.BAL_TOKEN, amount);
+
+    await TokenUtils.getToken(EthAddresses.bbUSD_TOKEN, this.signer.address, amount);
+    await IERC20__factory.connect(EthAddresses.bbUSD_TOKEN, this.signer).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amount);
+    await IFeeDistributor__factory.connect(EthAddresses.BALANCER_FEE_DISTRIBUTOR, this.signer).depositToken(EthAddresses.bbUSD_TOKEN, amount);
   }
 
   protected async enterToVault() {

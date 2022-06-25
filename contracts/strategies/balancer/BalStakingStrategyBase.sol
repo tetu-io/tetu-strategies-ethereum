@@ -15,6 +15,7 @@ pragma solidity 0.8.4;
 import "@tetu_io/tetu-contracts/contracts/base/strategies/ProxyStrategyBase.sol";
 import "./IBalLocker.sol";
 import "@tetu_io/tetu-contracts/contracts/base/SlotsLib.sol";
+import "../../third_party/balancer/IBVault.sol";
 
 /// @title Base contract for BAL stake into veBAL pool
 /// @author belbix
@@ -27,10 +28,17 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "BalStakingStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.0.0";
+  string public constant VERSION = "1.1.0";
   /// @dev 0% buybacks, all should be done on polygon
   ///      Probably we will change it later
   uint256 private constant _BUY_BACK_RATIO = 0;
+
+  address private constant _BAL_TOKEN = 0xba100000625a3754423978a60c9317c58a424e3D;
+  address private constant _WETH_TOKEN = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  address private constant _BB_USD_TOKEN = 0x7B50775383d3D6f0215A8F290f2C9e2eEBBEceb2;
+  address private constant _BALANCER_VAULT = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+  bytes32 private constant _WETH_BB_USD_POOL_ID = 0x70b7d3b3209a59fb0400e17f67f3ee8c37363f4900020000000000000000018f;
+  bytes32 private constant _WETH_BAL_POOL_ID = 0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014;
 
   bytes32 internal constant _VE_LOCKER_KEY = bytes32(uint256(keccak256("s.ve_locker")) - 1);
   bytes32 internal constant _DEPOSITOR_KEY = bytes32(uint256(keccak256("s.depositor")) - 1);
@@ -95,13 +103,69 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
     address _depositor = _DEPOSITOR_KEY.getAddress();
     require(msg.sender == _depositor, "Not depositor");
 
-    uint length = _rewardTokens.length;
-    IERC20[] memory rtToClaim = new IERC20[](length);
-    for (uint i; i < length; i++) {
-      rtToClaim[i] = IERC20(_rewardTokens[i]);
-    }
+    IERC20[] memory rtToClaim = new IERC20[](1);
 
+    // claim BAL rewards
+    rtToClaim[0] = IERC20(_BAL_TOKEN);
     IBalLocker(_VE_LOCKER_KEY.getAddress()).claimVeRewards(rtToClaim, _depositor);
+
+    // claim bb-usd rewards
+    rtToClaim[0] = IERC20(_BB_USD_TOKEN);
+    IBalLocker(_VE_LOCKER_KEY.getAddress()).claimVeRewards(rtToClaim, address(this));
+
+    uint amount = IERC20(_BB_USD_TOKEN).balanceOf(address(this));
+
+    if (amount != 0) {
+
+      // bbUSD token already have max allowance for balancer vault
+
+      IBVault.BatchSwapStep[] memory swaps = new IBVault.BatchSwapStep[](2);
+
+      IAsset[] memory assets = new IAsset[](3);
+      assets[0] = IAsset(_BB_USD_TOKEN);
+      assets[1] = IAsset(_WETH_TOKEN);
+      assets[2] = IAsset(_BAL_TOKEN);
+
+      IBVault.FundManagement memory fundManagement = IBVault.FundManagement({
+      sender : address(this),
+      fromInternalBalance : false,
+      recipient : payable (_depositor),
+      toInternalBalance : false
+      });
+
+      int256[] memory limits = new int256[](3);
+      limits[0] = type(int256).max;
+      limits[1] = type(int256).max;
+      limits[2] = type(int256).max;
+
+      // set first step
+      swaps[0] = IBVault.BatchSwapStep({
+      poolId : _WETH_BB_USD_POOL_ID,
+      assetInIndex : 0,
+      assetOutIndex : 1,
+      amount : amount,
+      userData : ""
+      });
+
+      // set second step
+      swaps[1] = IBVault.BatchSwapStep({
+      poolId : _WETH_BAL_POOL_ID,
+      assetInIndex : 1,
+      assetOutIndex : 2,
+      amount : 0,
+      userData : ""
+      });
+
+      IBVault(_BALANCER_VAULT).batchSwap(
+        IBVault.SwapKind.GIVEN_IN,
+        swaps,
+        assets,
+        fundManagement,
+        limits,
+        block.timestamp
+      );
+
+    }
   }
 
   /// @dev Stake underlying to the pool with maximum lock period

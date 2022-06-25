@@ -25,6 +25,7 @@ export class TokenUtils {
     [EthAddresses.TETU_TOKEN, '0x8f5adc58b32d4e5ca02eac0e293d35855999436c'.toLowerCase()], // todo temporally farm!
     [EthAddresses.BAL_TOKEN, '0xba12222222228d8ba445958a75a0704d566bf2c8'.toLowerCase()], // balancer vault
     [EthAddresses.BALANCER_BAL_WETH, '0xc128a9954e6c874ea3d62ce62b468ba073093f25'.toLowerCase()], // gnosis
+    [EthAddresses.bbUSD_TOKEN, '0xba12222222228d8ba445958a75a0704d566bf2c8'.toLowerCase()], // bal vault
   ]);
 
   public static async balanceOf(tokenAddress: string, account: string): Promise<BigNumber> {

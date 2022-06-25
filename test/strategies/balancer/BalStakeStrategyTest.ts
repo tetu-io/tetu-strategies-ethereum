@@ -45,9 +45,6 @@ const {expect} = chai;
 chai.use(chaiAsPromised);
 
 describe('BAL staking tests', async () => {
-  if (argv.disableStrategyTests || argv.hardhatChainId !== 1) {
-    return;
-  }
   const strategyName = 'StrategyBalStaking';
   const underlying = EthAddresses.BALANCER_BAL_WETH;
 
