@@ -68,7 +68,7 @@ export default {
   etherscan: {
     //  https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html#multiple-api-keys-and-alternative-block-explorers
     apiKey: {
-      polygon: argv.networkScanKey,
+      mainnet: argv.networkScanKey,
     },
   },
   solidity: {
