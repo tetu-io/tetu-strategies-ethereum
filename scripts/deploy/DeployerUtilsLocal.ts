@@ -484,7 +484,7 @@ export class DeployerUtilsLocal {
 
     let psAdr = core.psVault;
 
-    if (psAdr === Misc.ZERO_ADDRESS) {
+    if (psAdr === Misc.ZERO_ADDRESS && hre.network.name === 'hardhat') {
       const [vaultLogic, psVault, strategy] = await DeployerUtilsLocal.deployDefaultNoopStrategyAndVault(
         signer,
         IController__factory.connect(core.controller, signer),

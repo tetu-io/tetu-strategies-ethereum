@@ -21,8 +21,7 @@ contract StrategyBalancerPool is BalancerPoolBoostedStrategyBase {
     address depositToken_,
     bytes32 poolId_,
     address gauge_,
-    uint buybackRatio_,
-    address[] memory rewardTokens_
+    uint buybackRatio_
   ) external initializer {
     initializeStrategy(
       controller_,
@@ -30,8 +29,7 @@ contract StrategyBalancerPool is BalancerPoolBoostedStrategyBase {
       depositToken_,
       poolId_,
       gauge_,
-      buybackRatio_,
-      rewardTokens_
+      buybackRatio_
     );
   }
 

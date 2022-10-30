@@ -16,9 +16,12 @@ export class EthAddresses {
   public static TETU_TOKEN = "0x4f851750a3e6f80f1E1f89C67B56960Bfc29A934".toLowerCase();
   public static veBAL_TOKEN = "0xC128a9954e6c874eA3d62ce62B468bA073093F25".toLowerCase();
   public static bbUSD_TOKEN = "0x7B50775383d3D6f0215A8F290f2C9e2eEBBEceb2".toLowerCase();
+  public static wstETH_TOKEN = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0".toLowerCase();
+  public static LIDO_TOKEN = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32".toLowerCase();
 
 
   // balancer
+  public static BAL_LOCKER = "0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce".toLowerCase();
   public static BALANCER_VAULT = "0xBA12222222228d8Ba445958a75a0704d566BF2C8".toLowerCase();
   public static BALANCER_FEE_DISTRIBUTOR = "0xD3cf852898b21fc233251427c2DC93d3d604F3BB".toLowerCase();
   public static BALANCER_BAL_WETH_ID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014";

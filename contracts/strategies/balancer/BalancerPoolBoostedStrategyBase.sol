@@ -13,7 +13,7 @@
 pragma solidity 0.8.4;
 
 import "@tetu_io/tetu-contracts/contracts/base/strategies/ProxyStrategyBase.sol";
-import "../../third_party/balancer/IBalancerGauge.sol";
+import "../../third_party/balancer/IBalancerGaugeEth.sol";
 import "../../third_party/balancer/IBVault.sol";
 import "./IBalLocker.sol";
 import "../../interface/ITetuLiquidator.sol";
@@ -36,7 +36,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
   IBalLocker public constant BAL_LOCKER = IBalLocker(0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce);
-  ITetuLiquidator private constant TETU_LIQUIDATOR = ITetuLiquidator(0xC737eaB847Ae6A92028862fE38b828db41314772);
+  ITetuLiquidator private constant TETU_LIQUIDATOR = ITetuLiquidator(0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0);
 
   // *******************************************************
   //                      VARIABLES
@@ -45,9 +45,9 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   address public depositToken;
   IAsset[] public poolTokens;
   bytes32 public poolId;
-  IBalancerGauge public gauge;
+  IBalancerGaugeEth public gauge;
   address govRewardsConsumer;
-
+  uint public lastHw;
 
   /// @notice Initialize contract after setup it as proxy implementation
   function initializeStrategy(
@@ -56,8 +56,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     address depositToken_,
     bytes32 poolId_,
     address gauge_,
-    uint buybackRatio_,
-    address[] memory rewardTokens_
+    uint buybackRatio_
   ) public initializer {
 
     (IERC20[] memory tokens,,) = BALANCER_VAULT.getPoolTokens(poolId_);
@@ -70,10 +69,16 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     depositToken = depositToken_;
     poolId = poolId_;
 
-    gauge = IBalancerGauge(gauge_);
+    gauge = IBalancerGaugeEth(gauge_);
     IERC20(_getPoolAddress(poolId_)).safeApprove(address(BAL_LOCKER), type(uint).max);
 
     govRewardsConsumer = IController(controller_).governance();
+
+    uint length = gauge.reward_count();
+    address[] memory rewardTokens_ = new address[](length);
+    for (uint i; i < length; ++i) {
+      rewardTokens_[i] = gauge.reward_tokens(i);
+    }
 
     ProxyStrategyBase.initializeStrategyBase(
       controller_,
@@ -112,7 +117,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
 
   /// @dev Rewards amount ready to claim
   function readyToClaim() external view override returns (uint256[] memory toClaim) {
-    IBalancerGauge _gauge = gauge;
+    IBalancerGaugeEth _gauge = gauge;
     toClaim = new uint256[](_rewardTokens.length);
     for (uint i; i < toClaim.length; i++) {
       address rt = _rewardTokens[i];
@@ -142,7 +147,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
 
   /// @dev Deposit LP tokens to gauge
   function depositToPool(uint256 amount) internal override {
-    _doHardWork();
+    _doHardWork(true, false);
     if (amount != 0) {
       BAL_LOCKER.depositToGauge(address(gauge), amount);
     }
@@ -153,7 +158,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     if (amount != 0) {
       BAL_LOCKER.withdrawFromGauge(address(gauge), amount);
     }
-    _doHardWork();
+    _doHardWork(true, false);
   }
 
   /// @dev Emergency withdraw all from a gauge
@@ -163,17 +168,25 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
 
   /// @dev Make something useful with rewards
   function doHardWork() external onlyNotPausedInvesting override hardWorkers {
-    _doHardWork();
+    _doHardWork(false, true);
   }
 
-  function _doHardWork() internal {
-    BAL_LOCKER.claimRewardsFromGauge(address(gauge), address(this));
-    liquidateReward();
-    // hit for properly statistic metrics
-    IBookkeeper(IController(_controller()).bookkeeper()).registerStrategyEarned(0);
+  function _doHardWork(bool silently, bool push) internal {
+    uint _lastHw = lastHw;
+    if (push || _lastHw == 0 || block.timestamp - _lastHw > 12 hours) {
+      BAL_LOCKER.claimRewardsFromGauge(address(gauge), address(this));
+      liquidateReward(silently);
+      // hit for properly statistic metrics
+      IBookkeeper(IController(_controller()).bookkeeper()).registerStrategyEarned(0);
+      lastHw = block.timestamp;
+    }
   }
 
-  function liquidateReward() internal override {
+  function liquidateReward() internal override{
+    // noop
+  }
+
+  function liquidateReward(bool silently) internal {
     address _govRewardsConsumer = govRewardsConsumer;
     address _depositToken = depositToken;
     uint bbRatio = _buyBackRatio();
@@ -184,7 +197,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
         uint toCompound = amount * (_BUY_BACK_DENOMINATOR - bbRatio) / _BUY_BACK_DENOMINATOR;
         uint toGov = amount - toCompound;
         if (toCompound != 0) {
-          _liquidate(rt, _depositToken, toCompound);
+          _liquidate(rt, _depositToken, toCompound, silently);
         }
         if (toGov != 0) {
           IERC20(rt).safeTransfer(_govRewardsConsumer, toGov);
@@ -215,11 +228,15 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     BALANCER_VAULT.joinPool(_poolId, address(this), address(this), request);
   }
 
-  function _liquidate(address tokenIn, address tokenOut, uint amount) internal {
+  function _liquidate(address tokenIn, address tokenOut, uint amount, bool silently) internal {
     if (tokenIn != tokenOut && amount != 0) {
       _approveIfNeeds(tokenIn, amount, address(TETU_LIQUIDATOR));
       // don't revert on errors
-      try TETU_LIQUIDATOR.liquidate(tokenIn, tokenOut, amount, PRICE_IMPACT_TOLERANCE) {} catch {}
+      if (silently) {
+        try TETU_LIQUIDATOR.liquidate(tokenIn, tokenOut, amount, PRICE_IMPACT_TOLERANCE) {} catch {}
+      } else {
+        TETU_LIQUIDATOR.liquidate(tokenIn, tokenOut, amount, PRICE_IMPACT_TOLERANCE);
+      }
     }
   }
 
@@ -241,5 +258,5 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
 
 
   //slither-disable-next-line unused-state
-  uint256[50] private ______gap;
+  uint256[45] private ______gap;
 }

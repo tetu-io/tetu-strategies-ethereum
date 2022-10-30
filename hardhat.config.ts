@@ -57,7 +57,7 @@ export default {
         path: "m/44'/60'/0'/0",
         accountsBalance: "100000000000000000000000000000"
       },
-      loggingEnabled: true
+      // loggingEnabled: true
     },
     eth: {
       url: argv.ethRpcUrl,

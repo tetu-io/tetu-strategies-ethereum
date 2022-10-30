@@ -7,16 +7,23 @@ import {SpecificStrategyTest} from "../SpecificStrategyTest";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {CoreContractsWrapper} from "../../CoreContractsWrapper";
 import {DeployerUtilsLocal} from "../../../scripts/deploy/DeployerUtilsLocal";
-import {ISmartVault, IStrategy, StrategyBalancerPool__factory} from "../../../typechain";
+import {
+  BalLocker,
+  BalLocker__factory,
+  ISmartVault,
+  IStrategy,
+  StrategyBalancerPool__factory
+} from "../../../typechain";
 import {ToolsContractsWrapper} from "../../ToolsContractsWrapper";
 import {universalStrategyTest} from "../UniversalStrategyTest";
 import {BalancerLpSpecificHardWork} from "./BalancerLpSpecificHardWork";
+import {Misc} from "../../../scripts/utils/tools/Misc";
 
 
 const {expect} = chai;
 chai.use(chaiAsPromised);
 
-describe.skip('BalancerPool_wstETH_WETH_Test', async () => {
+describe('BalancerPool_wstETH_WETH_Test', async () => {
   const deployInfo: DeployInfo = new DeployInfo();
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
@@ -33,7 +40,6 @@ describe.skip('BalancerPool_wstETH_WETH_Test', async () => {
   const gauge = EthAddresses.BALANCER_GAUGE_wstETH_WETH;
   const depositToken = EthAddresses.WETH_TOKEN;
   const buybackRatio = 500;
-  const rewardTokens = [EthAddresses.BAL_TOKEN];
 
   // add custom liquidation path if necessary
   const forwarderConfigurator = null;
@@ -68,8 +74,11 @@ describe.skip('BalancerPool_wstETH_WETH_Test', async () => {
           poolId,
           gauge,
           buybackRatio,
-          rewardTokens,
         );
+
+        await BalLocker__factory.connect(EthAddresses.BAL_LOCKER, await DeployerUtilsLocal.impersonate())
+          .linkDepositorsToGauges([strategy.address], [EthAddresses.BALANCER_GAUGE_wstETH_WETH]);
+
         return strategy;
       },
       underlying,
@@ -86,7 +95,7 @@ describe.skip('BalancerPool_wstETH_WETH_Test', async () => {
     _strategy: IStrategy,
     _balanceTolerance: number
   ) => {
-    return new BalancerLpSpecificHardWork(
+    const hw = new BalancerLpSpecificHardWork(
       _signer,
       _user,
       _core,
@@ -97,6 +106,9 @@ describe.skip('BalancerPool_wstETH_WETH_Test', async () => {
       _balanceTolerance,
       finalBalanceTolerance,
     );
+    hw.checkToClaim = false;
+    hw.checkPsSharePrice = false;
+    return hw;
   };
 
   await universalStrategyTest(

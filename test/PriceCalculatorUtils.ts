@@ -28,6 +28,7 @@ export class PriceCalculatorUtils {
 
   // keep this method for possible implement caches
   public static async getPriceCached(token: string, calculator: IPriceCalculator | null = null): Promise<BigNumber> {
+    console.log('Get price for ', token)
     const net = await ethers.provider.getNetwork();
     let network = ''
     if (net.chainId === 137) {

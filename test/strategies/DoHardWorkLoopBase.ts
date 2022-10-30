@@ -42,6 +42,8 @@ export class DoHardWorkLoopBase {
   stratEarned = BigNumber.from(0);
   vaultPPFS = BigNumber.from(0);
   priceCache = new Map<string, BigNumber>();
+  checkPsSharePrice = true;
+  checkToClaim = true;
   totalToClaimInTetuN = 0;
   toClaimCheckTolerance = 0.3;
 
@@ -143,7 +145,7 @@ export class DoHardWorkLoopBase {
 
   protected async loopEndCheck() {
     // ** check to claim
-    if (this.totalToClaimInTetuN !== 0 && this.bbRatio !== 0) {
+    if (this.totalToClaimInTetuN !== 0 && this.bbRatio !== 0 && this.checkToClaim) {
       const earnedN = +utils.formatUnits(this.stratEarned);
       const earnedNAdjusted = earnedN / (this.bbRatio / 10000);
       expect(earnedNAdjusted).is.greaterThanOrEqual(this.totalToClaimInTetuN * this.toClaimCheckTolerance); // very approximately
@@ -345,7 +347,7 @@ export class DoHardWorkLoopBase {
     const vaultBalanceAfter = await TokenUtils.balanceOf(this.core.psVault.address, this.vault.address);
     expect(vaultBalanceAfter.sub(this.vaultRTBal)).is.not.eq("0", "vault reward should increase");
 
-    if (this.bbRatio !== 0) {
+    if (this.bbRatio !== 0 && this.checkPsSharePrice) {
       // check ps balance
       const psBalanceAfter = await TokenUtils.balanceOf(this.core.rewardToken.address, this.core.psVault.address);
       expect(psBalanceAfter.sub(this.psBal)).is.not.eq("0", "ps balance should increase");

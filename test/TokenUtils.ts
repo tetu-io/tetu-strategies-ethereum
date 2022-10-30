@@ -26,6 +26,8 @@ export class TokenUtils {
     [EthAddresses.BAL_TOKEN, '0xba12222222228d8ba445958a75a0704d566bf2c8'.toLowerCase()], // balancer vault
     [EthAddresses.BALANCER_BAL_WETH, '0xc128a9954e6c874ea3d62ce62b468ba073093f25'.toLowerCase()], // gnosis
     [EthAddresses.bbUSD_TOKEN, '0xba12222222228d8ba445958a75a0704d566bf2c8'.toLowerCase()], // bal vault
+    [EthAddresses.BALANCER_wstETH_WETH, '0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE'.toLowerCase()], // bal gauge
+    [EthAddresses.LIDO_TOKEN, '0x3e40d73eb977dc6a537af587d48316fee66e9c8c'.toLowerCase()], // lido treasury
   ]);
 
   public static async balanceOf(tokenAddress: string, account: string): Promise<BigNumber> {
