@@ -18,7 +18,7 @@ import {universalStrategyTest} from "../UniversalStrategyTest";
 import {BalancerLpSpecificHardWork} from "./BalancerLpSpecificHardWork";
 
 
-describe('BalancerPool_wstETH_WETH_Test', async () => {
+describe.skip('BalancerPool_wstETH_bbaUSD_Test', async () => {
   const deployInfo: DeployInfo = new DeployInfo();
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
@@ -29,11 +29,11 @@ describe('BalancerPool_wstETH_WETH_Test', async () => {
   // ************** CONFIG*************************
   // **********************************************
   const strategyContractName = 'StrategyBalancerPool';
-  const vaultName = "wstETH_WETH_BPT";
-  const underlying = EthAddresses.BALANCER_wstETH_WETH;
-  const poolId = EthAddresses.BALANCER_wstETH_WETH_ID;
-  const gauge = EthAddresses.BALANCER_GAUGE_wstETH_WETH;
-  const depositToken = EthAddresses.WETH_TOKEN;
+  const vaultName = "wstETH_bbaUSD_BPT";
+  const underlying = EthAddresses.BALANCER_wstETH_bbaUSD;
+  const poolId = EthAddresses.BALANCER_wstETH_bbaUSD_ID;
+  const gauge = EthAddresses.BALANCER_wstETH_bbaUSD_GAUGE;
+  const depositToken = EthAddresses.wstETH_TOKEN;
   const buybackRatio = 500;
 
   // add custom liquidation path if necessary

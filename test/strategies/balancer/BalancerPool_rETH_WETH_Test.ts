@@ -18,7 +18,7 @@ import {universalStrategyTest} from "../UniversalStrategyTest";
 import {BalancerLpSpecificHardWork} from "./BalancerLpSpecificHardWork";
 
 
-describe('BalancerPool_wstETH_WETH_Test', async () => {
+describe('BalancerPool_rETH_WETH_Test', async () => {
   const deployInfo: DeployInfo = new DeployInfo();
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
@@ -29,10 +29,10 @@ describe('BalancerPool_wstETH_WETH_Test', async () => {
   // ************** CONFIG*************************
   // **********************************************
   const strategyContractName = 'StrategyBalancerPool';
-  const vaultName = "wstETH_WETH_BPT";
-  const underlying = EthAddresses.BALANCER_wstETH_WETH;
-  const poolId = EthAddresses.BALANCER_wstETH_WETH_ID;
-  const gauge = EthAddresses.BALANCER_GAUGE_wstETH_WETH;
+  const vaultName = "rETH_WETH_BPT";
+  const underlying = EthAddresses.BALANCER_rETH_WETH;
+  const poolId = EthAddresses.BALANCER_rETH_WETH_ID;
+  const gauge = EthAddresses.BALANCER_rETH_WETH_GAUGE;
   const depositToken = EthAddresses.WETH_TOKEN;
   const buybackRatio = 500;
 

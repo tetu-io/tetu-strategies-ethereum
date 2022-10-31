@@ -18,6 +18,7 @@ export class EthAddresses {
   public static bbUSD_TOKEN = "0x7B50775383d3D6f0215A8F290f2C9e2eEBBEceb2".toLowerCase();
   public static wstETH_TOKEN = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0".toLowerCase();
   public static LIDO_TOKEN = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32".toLowerCase();
+  public static bbaUSDC_TOKEN = "0x82698aeCc9E28e9Bb27608Bd52cF57f704BD1B83".toLowerCase();
 
 
   // balancer
@@ -34,6 +35,22 @@ export class EthAddresses {
   public static BALANCER_wstETH_WETH = "0x32296969Ef14EB0c6d29669C550D4a0449130230".toLowerCase();
   public static BALANCER_wstETH_WETH_ID = "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080".toLowerCase();
   public static BALANCER_GAUGE_wstETH_WETH = "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE".toLowerCase();
+
+  public static BALANCER_bbaUSD = "0xA13a9247ea42D743238089903570127DdA72fE44".toLowerCase();
+  public static BALANCER_bbaUSD_ID = "0xa13a9247ea42d743238089903570127dda72fe4400000000000000000000035d".toLowerCase();
+  public static BALANCER_bbaUSD_GAUGE = "0xa6325e799d266632D347e41265a69aF111b05403".toLowerCase();
+
+  public static BALANCER_GNO_WETH = "0xf4c0dd9b82da36c07605df83c8a416f11724d88b".toLowerCase();
+  public static BALANCER_GNO_WETH_ID = "0xf4c0dd9b82da36c07605df83c8a416f11724d88b000200000000000000000026".toLowerCase();
+  public static BALANCER_GNO_WETH_GAUGE = "0xCB664132622f29943f67FA56CCfD1e24CC8B4995".toLowerCase();
+
+  public static BALANCER_rETH_WETH = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276".toLowerCase();
+  public static BALANCER_rETH_WETH_ID = "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112".toLowerCase();
+  public static BALANCER_rETH_WETH_GAUGE = "0x79eF6103A513951a3b25743DB509E267685726B7".toLowerCase();
+
+  public static BALANCER_wstETH_bbaUSD = "0x25accb7943fd73dda5e23ba6329085a3c24bfb6a".toLowerCase();
+  public static BALANCER_wstETH_bbaUSD_ID = "0x25accb7943fd73dda5e23ba6329085a3c24bfb6a000200000000000000000387".toLowerCase();
+  public static BALANCER_wstETH_bbaUSD_GAUGE = "0x651361a042e0573295dd7f6A84dBD1DA56DAc9D5".toLowerCase();
 
   // uniswap
   public static UNISWAP_FACTORY = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f".toLowerCase();

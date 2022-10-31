@@ -36,7 +36,8 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
   IBalLocker public constant BAL_LOCKER = IBalLocker(0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce);
-  ITetuLiquidator private constant TETU_LIQUIDATOR = ITetuLiquidator(0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0);
+  ITetuLiquidator public constant TETU_LIQUIDATOR = ITetuLiquidator(0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0);
+  address public constant BAL_TOKEN = 0xba100000625a3754423978a60c9317c58a424e3D;
 
   // *******************************************************
   //                      VARIABLES
@@ -75,9 +76,10 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     govRewardsConsumer = IController(controller_).governance();
 
     uint length = gauge.reward_count();
-    address[] memory rewardTokens_ = new address[](length);
-    for (uint i; i < length; ++i) {
-      rewardTokens_[i] = gauge.reward_tokens(i);
+    address[] memory rewardTokens_ = new address[](length + 1);
+    rewardTokens_[0] = BAL_TOKEN;
+    for (uint i = 1; i < length + 1; ++i) {
+      rewardTokens_[i] = gauge.reward_tokens(i - 1);
     }
 
     ProxyStrategyBase.initializeStrategyBase(
@@ -175,6 +177,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     uint _lastHw = lastHw;
     if (push || _lastHw == 0 || block.timestamp - _lastHw > 12 hours) {
       BAL_LOCKER.claimRewardsFromGauge(address(gauge), address(this));
+      BAL_LOCKER.claimRewardsFromMinter(address(gauge), address(this));
       liquidateReward(silently);
       // hit for properly statistic metrics
       IBookkeeper(IController(_controller()).bookkeeper()).registerStrategyEarned(0);
@@ -182,7 +185,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     }
   }
 
-  function liquidateReward() internal override{
+  function liquidateReward() internal override {
     // noop
   }
 
@@ -190,8 +193,9 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     address _govRewardsConsumer = govRewardsConsumer;
     address _depositToken = depositToken;
     uint bbRatio = _buyBackRatio();
-    for (uint i = 0; i < _rewardTokens.length; i++) {
-      address rt = _rewardTokens[i];
+    address[] memory rts = _rewardTokens;
+    for (uint i = 0; i < rts.length; i++) {
+      address rt = rts[i];
       uint amount = IERC20(rt).balanceOf(address(this));
       if (amount != 0) {
         uint toCompound = amount * (_BUY_BACK_DENOMINATOR - bbRatio) / _BUY_BACK_DENOMINATOR;
