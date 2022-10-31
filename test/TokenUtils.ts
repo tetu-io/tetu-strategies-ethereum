@@ -30,6 +30,7 @@ export class TokenUtils {
     [EthAddresses.LIDO_TOKEN, '0x3e40d73eb977dc6a537af587d48316fee66e9c8c'.toLowerCase()], // lido treasury
     [EthAddresses.BALANCER_GNO_WETH, EthAddresses.BALANCER_GNO_WETH_GAUGE.toLowerCase()], // gauge
     [EthAddresses.BALANCER_rETH_WETH, EthAddresses.BALANCER_rETH_WETH_GAUGE.toLowerCase()], // gauge
+    [EthAddresses.BALANCER_wstETH_bbaUSD, EthAddresses.BALANCER_wstETH_bbaUSD_GAUGE.toLowerCase()], // gauge
   ]);
 
   public static async balanceOf(tokenAddress: string, account: string): Promise<BigNumber> {

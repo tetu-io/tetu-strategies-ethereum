@@ -18,7 +18,7 @@ import {universalStrategyTest} from "../UniversalStrategyTest";
 import {BalancerLpSpecificHardWork} from "./BalancerLpSpecificHardWork";
 
 
-describe.skip('BalancerPool_wstETH_bbaUSD_Test', async () => {
+describe('BalancerPool_wstETH_bbaUSD_Test', async () => {
   const deployInfo: DeployInfo = new DeployInfo();
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
