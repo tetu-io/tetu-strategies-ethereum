@@ -43,7 +43,7 @@ export async function deployBalancerVaultAndStrategy(pool: string, poolId: strin
     depositToken,
     poolId,
     gauge,
-    80_00
+    20_00
   ));
 
   if (hre.network.name !== 'hardhat') {
