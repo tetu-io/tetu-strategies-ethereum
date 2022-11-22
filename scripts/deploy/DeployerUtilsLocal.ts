@@ -44,7 +44,7 @@ const hre = require("hardhat");
 const log: Logger = new Logger(logSettings);
 
 
-const VAULT_LOGIC = '0xeE7FFE79689B3d826C7389B95780F42849Fb7019'
+const VAULT_LOGIC = '0xc8Be20e84E608c9c17422a4928D77Cb7c677d260'
 const SPLITTER_LOGIC = ''
 
 dotEnvConfig();
