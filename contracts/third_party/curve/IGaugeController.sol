@@ -7,4 +7,6 @@ interface IGaugeController {
 
   function vote_for_gauge_weights(address gauge, uint weight) external;
 
+  function vote_user_slopes(address user, address gauge) external view returns (uint, uint, uint);
+
 }

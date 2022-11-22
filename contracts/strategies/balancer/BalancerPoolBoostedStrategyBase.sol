@@ -31,7 +31,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "BalancerPoolBoostedStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.0.0";
+  string public constant VERSION = "1.0.1";
 
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
@@ -217,19 +217,21 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
 
   /// @dev Join to the given pool (exchange tokenIn to underlying BPT)
   function _balancerJoin(IAsset[] memory _poolTokens, bytes32 _poolId, address _tokenIn, uint _amountIn) internal {
-    uint[] memory amounts = new uint[](_poolTokens.length);
-    for (uint i = 0; i < amounts.length; i++) {
-      amounts[i] = address(_poolTokens[i]) == _tokenIn ? _amountIn : 0;
+    if (_amountIn != 0) {
+      uint[] memory amounts = new uint[](_poolTokens.length);
+      for (uint i = 0; i < amounts.length; i++) {
+        amounts[i] = address(_poolTokens[i]) == _tokenIn ? _amountIn : 0;
+      }
+      bytes memory userData = abi.encode(1, amounts, 1);
+      IBVault.JoinPoolRequest memory request = IBVault.JoinPoolRequest({
+      assets : _poolTokens,
+      maxAmountsIn : amounts,
+      userData : userData,
+      fromInternalBalance : false
+      });
+      _approveIfNeeds(_tokenIn, _amountIn, address(BALANCER_VAULT));
+      BALANCER_VAULT.joinPool(_poolId, address(this), address(this), request);
     }
-    bytes memory userData = abi.encode(1, amounts, 1);
-    IBVault.JoinPoolRequest memory request = IBVault.JoinPoolRequest({
-    assets : _poolTokens,
-    maxAmountsIn : amounts,
-    userData : userData,
-    fromInternalBalance : false
-    });
-    _approveIfNeeds(_tokenIn, _amountIn, address(BALANCER_VAULT));
-    BALANCER_VAULT.joinPool(_poolId, address(this), address(this), request);
   }
 
   function _liquidate(address tokenIn, address tokenOut, uint amount, bool silently) internal {
