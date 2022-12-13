@@ -31,7 +31,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "BalancerPoolBoostedStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.0.1";
+  string public constant VERSION = "1.0.2";
 
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
@@ -218,32 +218,97 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   /// @dev Join to the given pool (exchange tokenIn to underlying BPT)
   function _balancerJoin(IAsset[] memory _poolTokens, bytes32 _poolId, address _tokenIn, uint _amountIn) internal {
     if (_amountIn != 0) {
-      uint[] memory amounts = new uint[](_poolTokens.length);
-      for (uint i = 0; i < amounts.length; i++) {
-        amounts[i] = address(_poolTokens[i]) == _tokenIn ? _amountIn : 0;
+      if (_isJoinBySwapAvailable(_poolTokens, _poolId)) {
+        // just swap for enter
+        _balancerSwap(_poolId, _tokenIn, _getPoolAddress(_poolId), _amountIn);
+      } else {
+        uint[] memory amounts = new uint[](_poolTokens.length);
+        for (uint i = 0; i < amounts.length; i++) {
+          amounts[i] = address(_poolTokens[i]) == _tokenIn ? _amountIn : 0;
+        }
+        bytes memory userData = abi.encode(1, amounts, 1);
+        IBVault.JoinPoolRequest memory request = IBVault.JoinPoolRequest({
+        assets : _poolTokens,
+        maxAmountsIn : amounts,
+        userData : userData,
+        fromInternalBalance : false
+        });
+        _approveIfNeeds(_tokenIn, _amountIn, address(BALANCER_VAULT));
+        BALANCER_VAULT.joinPool(_poolId, address(this), address(this), request);
       }
-      bytes memory userData = abi.encode(1, amounts, 1);
-      IBVault.JoinPoolRequest memory request = IBVault.JoinPoolRequest({
-      assets : _poolTokens,
-      maxAmountsIn : amounts,
-      userData : userData,
-      fromInternalBalance : false
+    }
+  }
+
+  function _isJoinBySwapAvailable(IAsset[] memory _poolTokens, bytes32 _poolId) internal pure returns (bool){
+    address poolAdr = _getPoolAddress(_poolId);
+    for (uint i; i < _poolTokens.length; ++i) {
+      if (address(_poolTokens[i]) == poolAdr) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// @dev Swap _tokenIn to _tokenOut using pool identified by _poolId
+  function _balancerSwap(bytes32 _poolId, address _tokenIn, address _tokenOut, uint _amountIn) internal {
+    if (_amountIn != 0) {
+      IBVault.SingleSwap memory singleSwapData = IBVault.SingleSwap({
+      poolId : _poolId,
+      kind : IBVault.SwapKind.GIVEN_IN,
+      assetIn : IAsset(_tokenIn),
+      assetOut : IAsset(_tokenOut),
+      amount : _amountIn,
+      userData : ""
       });
+
+      IBVault.FundManagement memory fundManagementStruct = IBVault.FundManagement({
+      sender : address(this),
+      fromInternalBalance : false,
+      recipient : payable(address(this)),
+      toInternalBalance : false
+      });
+
       _approveIfNeeds(_tokenIn, _amountIn, address(BALANCER_VAULT));
-      BALANCER_VAULT.joinPool(_poolId, address(this), address(this), request);
+      BALANCER_VAULT.swap(singleSwapData, fundManagementStruct, 1, block.timestamp);
     }
   }
 
   function _liquidate(address tokenIn, address tokenOut, uint amount, bool silently) internal {
-    if (tokenIn != tokenOut && amount != 0) {
+    address tokenOutRewrite = _rewriteLinearUSDC(tokenOut);
+
+    if (tokenIn != tokenOutRewrite && amount != 0) {
       _approveIfNeeds(tokenIn, amount, address(TETU_LIQUIDATOR));
       // don't revert on errors
       if (silently) {
-        try TETU_LIQUIDATOR.liquidate(tokenIn, tokenOut, amount, PRICE_IMPACT_TOLERANCE) {} catch {}
+        try TETU_LIQUIDATOR.liquidate(tokenIn, tokenOutRewrite, amount, PRICE_IMPACT_TOLERANCE) {} catch {}
       } else {
-        TETU_LIQUIDATOR.liquidate(tokenIn, tokenOut, amount, PRICE_IMPACT_TOLERANCE);
+        TETU_LIQUIDATOR.liquidate(tokenIn, tokenOutRewrite, amount, PRICE_IMPACT_TOLERANCE);
       }
     }
+
+    // assume need to swap rewritten token manually
+    if (tokenOut != tokenOutRewrite && amount != 0) {
+      _swapLinearUSDC(tokenOutRewrite, tokenOut);
+    }
+  }
+
+  /// @dev It is a temporally logic until liquidator implement swapper for LinearPool
+  function _rewriteLinearUSDC(address token) internal pure returns (address){
+    if (token == 0x82698aeCc9E28e9Bb27608Bd52cF57f704BD1B83 /*bbamUSDC*/) {
+      // USDC
+      return 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    }
+    return token;
+  }
+
+  /// @dev It is a temporally logic until liquidator implement swapper for LinearPool
+  function _swapLinearUSDC(address tokenIn, address tokenOut) internal {
+    _balancerSwap(
+      0x82698aecc9e28e9bb27608bd52cf57f704bd1b83000000000000000000000336,
+      tokenIn,
+      tokenOut,
+      IERC20(tokenIn).balanceOf(address(this))
+    );
   }
 
   function _approveIfNeeds(address token, uint amount, address spender) internal {
