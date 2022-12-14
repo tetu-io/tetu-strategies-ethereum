@@ -19,6 +19,9 @@ export class EthAddresses {
   public static wstETH_TOKEN = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0".toLowerCase();
   public static LIDO_TOKEN = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32".toLowerCase();
   public static bbaUSDC_TOKEN = "0x82698aeCc9E28e9Bb27608Bd52cF57f704BD1B83".toLowerCase();
+  public static BADGER_TOKEN = "0x3472A5A71965499acd81997a54BBA8D852C6E53d".toLowerCase();
+  public static rETH_TOKEN = "0xae78736Cd615f374D3085123A210448E74Fc6393".toLowerCase();
+  public static STG_TOKEN = "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6".toLowerCase();
 
 
   // balancer
@@ -51,6 +54,14 @@ export class EthAddresses {
   public static BALANCER_wstETH_bbaUSD = "0x25accb7943fd73dda5e23ba6329085a3c24bfb6a".toLowerCase();
   public static BALANCER_wstETH_bbaUSD_ID = "0x25accb7943fd73dda5e23ba6329085a3c24bfb6a000200000000000000000387".toLowerCase();
   public static BALANCER_wstETH_bbaUSD_GAUGE = "0x651361a042e0573295dd7f6A84dBD1DA56DAc9D5".toLowerCase();
+
+  public static BALANCER_BADGER_rETH = "0xe340EBfcAA544da8bB1Ee9005F1a346D50Ec422e".toLowerCase();
+  public static BALANCER_BADGER_rETH_ID = "0xe340ebfcaa544da8bb1ee9005f1a346d50ec422e000200000000000000000396".toLowerCase();
+  public static BALANCER_BADGER_rETH_GAUGE = "0xb32Ae42524d38be7E7eD9E02b5F9330fCEf07f3F".toLowerCase();
+
+  public static BALANCER_STG_bbaUSD = "0x4ce0BD7deBf13434d3ae127430e9BD4291bfB61f".toLowerCase();
+  public static BALANCER_STG_bbaUSD_ID = "0x4ce0bd7debf13434d3ae127430e9bd4291bfb61f00020000000000000000038b".toLowerCase();
+  public static BALANCER_STG_bbaUSD_GAUGE = "0x9703C0144e8b68280b97d9e30aC6f979Dd6A38d7".toLowerCase();
 
   // uniswap
   public static UNISWAP_FACTORY = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f".toLowerCase();
