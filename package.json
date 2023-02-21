@@ -54,6 +54,8 @@
     "ethereum-waffle": "^3.4.0",
     "ethereumjs-tx": "^2.1.2",
     "ethers": "^5.5.3",
+    "graphql": "^16.6.0",
+    "graphql-request": "^5.1.0",
     "hardhat": "^2.8.3",
     "hardhat-abi-exporter": "^2.8.0",
     "hardhat-contract-sizer": "^2.1.1",
