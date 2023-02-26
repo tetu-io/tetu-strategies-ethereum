@@ -27,6 +27,7 @@ export class TokenUtils {
     [EthAddresses.BALANCER_BAL_WETH, '0xc128a9954e6c874ea3d62ce62b468ba073093f25'.toLowerCase()], // gnosis
     [EthAddresses.bbUSD_TOKEN, '0xba12222222228d8ba445958a75a0704d566bf2c8'.toLowerCase()], // bal vault
     [EthAddresses.BALANCER_wstETH_WETH, '0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE'.toLowerCase()], // bal gauge
+    [EthAddresses.BALANCER_USDC_WUSDR, '0xe9866B9dc2c1213433f614CbB22EdAA0FAFF9a66'.toLowerCase()], // bal gauge
     [EthAddresses.LIDO_TOKEN, '0x3e40d73eb977dc6a537af587d48316fee66e9c8c'.toLowerCase()], // lido treasury
     [EthAddresses.BALANCER_GNO_WETH, EthAddresses.BALANCER_GNO_WETH_GAUGE.toLowerCase()], // gauge
     [EthAddresses.BALANCER_rETH_WETH, EthAddresses.BALANCER_rETH_WETH_GAUGE.toLowerCase()], // gauge
