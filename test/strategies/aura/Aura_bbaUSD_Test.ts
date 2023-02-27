@@ -19,7 +19,6 @@ describe('Aura_bbaUSD_Test', async () => {
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
     // add AURA to liquidator
-    // const s = await ethers.provider.getSigner();
     const s = await DeployerUtilsLocal.impersonate('0xbbbbb8C4364eC2ce52c59D2Ed3E56F307E529a94')
     const liquidator = ITetuLiquidatorOp__factory.connect('0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0', s)
     await liquidator.addLargestPools([{
@@ -38,7 +37,7 @@ describe('Aura_bbaUSD_Test', async () => {
   const vaultName = "bbaUSD_AURA";
   const underlying = EthAddresses.BALANCER_bbaUSD;
   const poolId = EthAddresses.BALANCER_bbaUSD_ID;
-  const rewardPool = EthAddresses.AURA_bbaUSD_WETH_REWARD_POOL;
+  const rewardPool = EthAddresses.AURA_bbaUSD_REWARD_POOL;
   const depositToken = EthAddresses.bbaUSDC_TOKEN;
   const buybackRatio = 500;
 

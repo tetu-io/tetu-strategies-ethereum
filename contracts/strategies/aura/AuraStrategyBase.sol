@@ -22,7 +22,7 @@ import "../../interface/ITetuLiquidator.sol";
 
 /// @title Base contract for BPT farming with Aura
 /// @author a17
-abstract contract BalancerPoolAuraStrategyBase is ProxyStrategyBase {
+abstract contract AuraStrategyBase is ProxyStrategyBase {
   using SafeERC20 for IERC20;
 
   // *******************************************************
@@ -30,7 +30,7 @@ abstract contract BalancerPoolAuraStrategyBase is ProxyStrategyBase {
   // *******************************************************
 
   /// @notice Strategy type for statistical purposes
-  string public constant override STRATEGY_NAME = "BalancerPoolAuraStrategyBase";
+  string public constant override STRATEGY_NAME = "AuraStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
   string public constant VERSION = "1.0.0";
@@ -153,7 +153,7 @@ abstract contract BalancerPoolAuraStrategyBase is ProxyStrategyBase {
   /// @dev Platform name for statistical purposes
   /// @return Platform enum index
   function platform() external override pure returns (Platform) {
-    return Platform.BALANCER;
+    return Platform.AURA;
   }
   /// @dev assets should reflect underlying tokens need to investing
   function assets() external override view returns (address[] memory) {

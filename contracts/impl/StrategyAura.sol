@@ -11,9 +11,9 @@
 */
 pragma solidity 0.8.4;
 
-import "../strategies/balancer/BalancerPoolAuraStrategyBase.sol";
+import "../strategies/aura/AuraStrategyBase.sol";
 
-contract StrategyAura is BalancerPoolAuraStrategyBase {
+contract StrategyAura is AuraStrategyBase {
 
   function initialize(
     address controller_,

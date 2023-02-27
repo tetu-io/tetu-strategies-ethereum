@@ -2,7 +2,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import {DoHardWorkLoopBase} from "../DoHardWorkLoopBase";
 import {
-  BalancerPoolAuraStrategyBase__factory,
+  AuraStrategyBase__factory,
   IBalancerGaugeEth__factory, IBaseRewardPool__factory, IBooster__factory
 } from "../../../typechain";
 import {parseUnits} from "ethers/lib/utils";
@@ -18,7 +18,7 @@ export class AuraSpecificHardWork extends DoHardWorkLoopBase {
   protected async loopStartActions(i: number) {
     await super.loopStartActions(i);
 
-    const strat = BalancerPoolAuraStrategyBase__factory.connect(this.strategy.address, this.signer);
+    const strat = AuraStrategyBase__factory.connect(this.strategy.address, this.signer);
     const booster = IBooster__factory.connect(await strat.AURA_BOOSTER(), this.signer)
     const auraRewardPool = IBaseRewardPool__factory.connect(await strat.auraRewardPool(), this.signer)
     const pid = await auraRewardPool.pid()

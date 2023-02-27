@@ -14,12 +14,11 @@ import {universalStrategyTest} from "../UniversalStrategyTest";
 import {AuraSpecificHardWork} from "./AuraSpecificHardWork";
 
 
-describe('Aura_USDC_WUSDR_Test', async () => {
+describe('Aura_wstETH_WETH_Test', async () => {
   const deployInfo: DeployInfo = new DeployInfo();
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
     // add AURA to liquidator
-    // const s = await ethers.provider.getSigner();
     const s = await DeployerUtilsLocal.impersonate('0xbbbbb8C4364eC2ce52c59D2Ed3E56F307E529a94')
     const liquidator = ITetuLiquidatorOp__factory.connect('0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0', s)
     await liquidator.addLargestPools([{
@@ -35,11 +34,11 @@ describe('Aura_USDC_WUSDR_Test', async () => {
   // ************** CONFIG*************************
   // **********************************************
   const strategyContractName = 'StrategyAura';
-  const vaultName = "USDC_WUSDR_AURA";
-  const underlying = EthAddresses.BALANCER_USDC_WUSDR;
-  const poolId = EthAddresses.BALANCER_USDC_WUSDR_ID;
-  const rewardPool = EthAddresses.AURA_USDC_WUSDR_REWARD_POOL;
-  const depositToken = EthAddresses.USDC_TOKEN;
+  const vaultName = "wstETH_WETH_AURA";
+  const underlying = EthAddresses.BALANCER_wstETH_WETH;
+  const poolId = EthAddresses.BALANCER_wstETH_WETH_ID;
+  const rewardPool = EthAddresses.AURA_wstETH_WETH_REWARD_POOL;
+  const depositToken = EthAddresses.WETH_TOKEN;
   const buybackRatio = 500;
 
   // add custom liquidation path if necessary
