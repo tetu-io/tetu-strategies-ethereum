@@ -51,7 +51,7 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
   bytes32 public poolId;
   IBaseRewardPool public auraRewardPool;
   uint public auraPoolId;
-  address govRewardsConsumer;
+  address public govRewardsConsumer;
   uint public lastHw;
 
   /// @notice Initialize contract after setup it as proxy implementation

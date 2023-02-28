@@ -31,7 +31,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "BalancerPoolBoostedStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.0.2";
+  string public constant VERSION = "1.0.3";
 
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
@@ -47,7 +47,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   IAsset[] public poolTokens;
   bytes32 public poolId;
   IBalancerGaugeEth public gauge;
-  address govRewardsConsumer;
+  address public govRewardsConsumer;
   uint public lastHw;
 
   /// @notice Initialize contract after setup it as proxy implementation
