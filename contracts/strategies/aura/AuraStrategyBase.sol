@@ -13,14 +13,16 @@
 pragma solidity 0.8.4;
 
 import "@tetu_io/tetu-contracts/contracts/base/strategies/ProxyStrategyBase.sol";
-import "../../third_party/balancer/IBalancerGaugeEth.sol";
 import "../../third_party/balancer/IBVault.sol";
-import "./IBalLocker.sol";
+import "../../third_party/aura/IBooster.sol";
+import "../../third_party/aura/IBaseRewardPool.sol";
+import "../../third_party/aura/IVirtualBalanceRewardPool.sol";
+import "../../third_party/aura/IAura.sol";
 import "../../interface/ITetuLiquidator.sol";
 
-/// @title Base contract for BPT farming using ve boost
-/// @author belbix
-abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
+/// @title Base contract for BPT farming with Aura
+/// @author a17
+abstract contract AuraStrategyBase is ProxyStrategyBase {
   using SafeERC20 for IERC20;
 
   // *******************************************************
@@ -28,16 +30,17 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   // *******************************************************
 
   /// @notice Strategy type for statistical purposes
-  string public constant override STRATEGY_NAME = "BalancerPoolBoostedStrategyBase";
+  string public constant override STRATEGY_NAME = "AuraStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.0.3";
+  string public constant VERSION = "1.0.0";
 
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
-  IBalLocker public constant BAL_LOCKER = IBalLocker(0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce);
+  IBooster public constant AURA_BOOSTER = IBooster(0xA57b8d98dAE62B26Ec3bcC4a365338157060B234);
   ITetuLiquidator public constant TETU_LIQUIDATOR = ITetuLiquidator(0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0);
   address public constant BAL_TOKEN = 0xba100000625a3754423978a60c9317c58a424e3D;
+  address public constant AURA_TOKEN = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF;
 
   // *******************************************************
   //                      VARIABLES
@@ -46,7 +49,8 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   address public depositToken;
   IAsset[] public poolTokens;
   bytes32 public poolId;
-  IBalancerGaugeEth public gauge;
+  IBaseRewardPool public auraRewardPool;
+  uint public auraPoolId;
   address public govRewardsConsumer;
   uint public lastHw;
 
@@ -56,7 +60,7 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     address vault_,
     address depositToken_,
     bytes32 poolId_,
-    address gauge_,
+    address auraRewardPool_,
     uint buybackRatio_
   ) public initializer {
 
@@ -70,16 +74,18 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     depositToken = depositToken_;
     poolId = poolId_;
 
-    gauge = IBalancerGaugeEth(gauge_);
-    IERC20(_getPoolAddress(poolId_)).safeApprove(address(BAL_LOCKER), type(uint).max);
+    auraRewardPool = IBaseRewardPool(auraRewardPool_);
+    IERC20(_getPoolAddress(poolId_)).safeApprove(address(AURA_BOOSTER), type(uint).max);
 
     govRewardsConsumer = IController(controller_).governance();
 
-    uint length = gauge.reward_count();
-    address[] memory rewardTokens_ = new address[](length + 1);
+    uint extraLength = auraRewardPool.extraRewardsLength();
+    address[] memory rewardTokens_ = new address[](2 + extraLength);
+
     rewardTokens_[0] = BAL_TOKEN;
-    for (uint i = 1; i < length + 1; ++i) {
-      rewardTokens_[i] = gauge.reward_tokens(i - 1);
+    rewardTokens_[1] = AURA_TOKEN;
+    for (uint i = 2; i < 2 + extraLength; ++i) {
+      rewardTokens_[i] = IVirtualBalanceRewardPool(auraRewardPool.extraRewards(i - 2)).rewardToken();
     }
 
     ProxyStrategyBase.initializeStrategyBase(
@@ -112,32 +118,43 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   //                      STRATEGY LOGIC
   // *******************************************************
 
-  /// @dev Balance of staked LPs in the gauge
-  function _rewardPoolBalance() internal override view returns (uint256) {
-    return gauge.balanceOf(address(BAL_LOCKER));
+  /// @dev Balance of staked BPTs to Aura by strategy
+  function _rewardPoolBalance() internal override view returns (uint) {
+    return auraRewardPool.balanceOf(address(this));
   }
 
   /// @dev Rewards amount ready to claim
-  function readyToClaim() external view override returns (uint256[] memory toClaim) {
-    IBalancerGaugeEth _gauge = gauge;
-    toClaim = new uint256[](_rewardTokens.length);
-    for (uint i; i < toClaim.length; i++) {
-      address rt = _rewardTokens[i];
-      toClaim[i] = _gauge.claimable_reward(address(BAL_LOCKER), rt);
+  function readyToClaim() external view override returns (uint[] memory toClaim) {
+    toClaim = new uint[](_rewardTokens.length);
+    toClaim[0] = auraRewardPool.earned(address(this));
+
+    IAura aura = IAura(AURA_TOKEN);
+    uint emissionsMinted = aura.totalSupply() - aura.EMISSIONS_MAX_SUPPLY();
+    uint cliff = emissionsMinted / aura.reductionPerCliff();
+    if (cliff < aura.totalCliffs()) {
+      uint reduction = (aura.totalCliffs() - cliff) * 5 / 2 + 700;
+      toClaim[1] = toClaim[0] * reduction / aura.totalCliffs();
+      uint amtTillMax = aura.EMISSIONS_MAX_SUPPLY() - emissionsMinted;
+      if (toClaim[1] > amtTillMax) {
+        toClaim[1] = amtTillMax;
+      }
+    }
+
+    for (uint i = 2; i < _rewardTokens.length; i++) {
+      toClaim[i] = IVirtualBalanceRewardPool(auraRewardPool.extraRewards(i - 2)).earned(address(this));
     }
   }
 
   /// @dev Return TVL of the farmable pool
-  function poolTotalAmount() external view override returns (uint256) {
-    return IERC20(_underlying()).balanceOf(address(gauge));
+  function poolTotalAmount() external view override returns (uint) {
+    return auraRewardPool.totalAssets();
   }
 
   /// @dev Platform name for statistical purposes
   /// @return Platform enum index
   function platform() external override pure returns (Platform) {
-    return Platform.BALANCER;
+    return Platform.AURA;
   }
-
   /// @dev assets should reflect underlying tokens need to investing
   function assets() external override view returns (address[] memory) {
     address[] memory token = new address[](poolTokens.length);
@@ -147,25 +164,25 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
     return token;
   }
 
-  /// @dev Deposit LP tokens to gauge
-  function depositToPool(uint256 amount) internal override {
+  /// @dev Deposit LP tokens to booster
+  function depositToPool(uint amount) internal override {
     _doHardWork(true, false);
     if (amount != 0) {
-      BAL_LOCKER.depositToGauge(address(gauge), amount);
+      AURA_BOOSTER.deposit(auraRewardPool.pid(), amount, true);
     }
   }
 
-  /// @dev Withdraw LP tokens from gauge
-  function withdrawAndClaimFromPool(uint256 amount) internal override {
+  /// @dev Withdraw LP tokens
+  function withdrawAndClaimFromPool(uint amount) internal override {
     if (amount != 0) {
-      BAL_LOCKER.withdrawFromGauge(address(gauge), amount);
+      auraRewardPool.withdrawAndUnwrap(amount, true);
     }
     _doHardWork(true, false);
   }
 
   /// @dev Emergency withdraw all from a gauge
   function emergencyWithdrawFromPool() internal override {
-    BAL_LOCKER.withdrawFromGauge(address(gauge), gauge.balanceOf(address(BAL_LOCKER)));
+    auraRewardPool.withdrawAndUnwrap(auraRewardPool.balanceOf(address(this)), true);
   }
 
   /// @dev Make something useful with rewards
@@ -176,8 +193,10 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
   function _doHardWork(bool silently, bool push) internal {
     uint _lastHw = lastHw;
     if (push || _lastHw == 0 || block.timestamp - _lastHw > 12 hours) {
-      BAL_LOCKER.claimRewardsFromGauge(address(gauge), address(this));
-      BAL_LOCKER.claimRewardsFromMinter(address(gauge), address(this));
+      auraRewardPool.getReward();
+      for (uint i = 2; i < _rewardTokens.length; i++) {
+        IVirtualBalanceRewardPool(auraRewardPool.extraRewards(i - 2)).getReward();
+      }
       liquidateReward(silently);
       // hit for properly statistic metrics
       IBookkeeper(IController(_controller()).bookkeeper()).registerStrategyEarned(0);
@@ -329,5 +348,5 @@ abstract contract BalancerPoolBoostedStrategyBase is ProxyStrategyBase {
 
 
   //slither-disable-next-line unused-state
-  uint256[45] private ______gap;
+  uint[45] private ______gap;
 }

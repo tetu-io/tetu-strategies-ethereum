@@ -45,7 +45,7 @@ const log: Logger = new Logger(logSettings);
 
 
 const VAULT_LOGIC = '0xc8Be20e84E608c9c17422a4928D77Cb7c677d260'
-const SPLITTER_LOGIC = ''
+const SPLITTER_LOGIC = '0xf5c32B020C334F523BEAeC5cAF9421B8bDE8227e'
 
 dotEnvConfig();
 // tslint:disable-next-line:no-var-requires

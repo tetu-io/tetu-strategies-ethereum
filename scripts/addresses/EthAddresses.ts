@@ -22,6 +22,7 @@ export class EthAddresses {
   public static BADGER_TOKEN = "0x3472A5A71965499acd81997a54BBA8D852C6E53d".toLowerCase();
   public static rETH_TOKEN = "0xae78736Cd615f374D3085123A210448E74Fc6393".toLowerCase();
   public static STG_TOKEN = "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6".toLowerCase();
+  public static AURA_TOKEN = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF".toLowerCase();
 
 
   // balancer
@@ -63,9 +64,17 @@ export class EthAddresses {
   public static BALANCER_STG_bbaUSD_ID = "0x4ce0bd7debf13434d3ae127430e9bd4291bfb61f00020000000000000000038b".toLowerCase();
   public static BALANCER_STG_bbaUSD_GAUGE = "0x9703C0144e8b68280b97d9e30aC6f979Dd6A38d7".toLowerCase();
 
+  public static BALANCER_USDC_WUSDR = "0x831261f44931B7dA8ba0DcC547223c60BB75B47F".toLowerCase();
+  public static BALANCER_USDC_WUSDR_ID = "0x831261f44931b7da8ba0dcc547223c60bb75b47f000200000000000000000460".toLowerCase();
+
   // uniswap
   public static UNISWAP_FACTORY = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f".toLowerCase();
   public static UNISWAP_ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D".toLowerCase();
+
+  // aura
+  public static AURA_USDC_WUSDR_REWARD_POOL = "0x2a596E721A9F1824F36c484e71f5bE80675Cca2b".toLowerCase();
+  public static AURA_wstETH_WETH_REWARD_POOL = "0xe4683fe8f53da14ca5dac4251eadfb3aa614d528".toLowerCase();
+  public static AURA_bbaUSD_REWARD_POOL = "0xfb6b1c1a1ea5618b3cfc20f81a11a97e930fa46b".toLowerCase();
 
   public static BLUE_CHIPS = new Set<string>([
     EthAddresses.USDC_TOKEN,
