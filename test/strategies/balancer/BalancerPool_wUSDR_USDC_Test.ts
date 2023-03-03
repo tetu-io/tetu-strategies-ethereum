@@ -1,3 +1,5 @@
+import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
 import {DeployInfo} from "../DeployInfo";
 import {StrategyTestUtils} from "../StrategyTestUtils";
 import {EthAddresses} from "../../../scripts/addresses/EthAddresses";
@@ -6,42 +8,33 @@ import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {CoreContractsWrapper} from "../../CoreContractsWrapper";
 import {DeployerUtilsLocal} from "../../../scripts/deploy/DeployerUtilsLocal";
 import {
+  BalLocker__factory,
   ISmartVault,
-  IStrategy, ITetuLiquidatorOp__factory, StrategyAura__factory,
+  IStrategy,
+  StrategyBalancerPool__factory
 } from "../../../typechain";
 import {ToolsContractsWrapper} from "../../ToolsContractsWrapper";
 import {universalStrategyTest} from "../UniversalStrategyTest";
-import {AuraSpecificHardWork} from "./AuraSpecificHardWork";
-import {Misc} from "../../../scripts/utils/tools/Misc";
-import {parseUnits} from "ethers/lib/utils";
+import {BalancerLpSpecificHardWork} from "./BalancerLpSpecificHardWork";
 
 
-describe('Aura_USDC_WUSDR_Test', async () => {
+describe('BalancerPool_wUSDR_USDC_Test', async () => {
   const deployInfo: DeployInfo = new DeployInfo();
   before(async function () {
     await StrategyTestUtils.deployCoreAndInit(deployInfo, true);
-    // add AURA to liquidator
-    const s = await DeployerUtilsLocal.impersonate('0xbbbbb8C4364eC2ce52c59D2Ed3E56F307E529a94')
-    const liquidator = ITetuLiquidatorOp__factory.connect('0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0', s)
-    await liquidator.addLargestPools([{
-      pool: '0xCfCA23cA9CA720B6E98E3Eb9B6aa0fFC4a5C08B9',
-      swapper: '0x7eFC54ED20E32EA76497CB241c7E658E3B29B04B',
-      tokenIn: EthAddresses.AURA_TOKEN,
-      tokenOut: EthAddresses.WETH_TOKEN,
-    }], true)
   });
 
 
   // **********************************************
   // ************** CONFIG*************************
   // **********************************************
-  const strategyContractName = 'StrategyAura';
-  const vaultName = "USDC_WUSDR_AURA";
-  const underlying = EthAddresses.BALANCER_USDC_WUSDR;
-  const poolId = EthAddresses.BALANCER_USDC_WUSDR_ID;
-  const rewardPool = EthAddresses.AURA_USDC_WUSDR_REWARD_POOL;
-  const depositToken = EthAddresses.USDC_TOKEN;
-  const buybackRatio = 50_00;
+  const strategyContractName = 'StrategyBalancerPool';
+  const vaultName = "BalancerPool_wUSDR_USDC_Test";
+  const underlying = EthAddresses.BALANCER_wUSDR_USDC;
+  const poolId = EthAddresses.BALANCER_wUSDR_USDC_ID;
+  const gauge = EthAddresses.BALANCER_wUSDR_USDC_GAUGE;
+  const depositToken = EthAddresses.wUSDR_TOKEN;
+  const buybackRatio = 500;
 
   // add custom liquidation path if necessary
   const forwarderConfigurator = null;
@@ -53,7 +46,7 @@ describe('Aura_USDC_WUSDR_Test', async () => {
   const deposit = 100_000;
   // at least 3
   const loops = 3;
-  const loopValue = 60 * 60 * 24;
+  const loopValue = 300;
   const advanceBlocks = false;
   const specificTests: SpecificStrategyTest[] = [];
   // **********************************************
@@ -69,16 +62,17 @@ describe('Aura_USDC_WUSDR_Test', async () => {
           signer,
           strategyContractName,
         );
-        await StrategyAura__factory.connect(strategy.address, signer).initialize(
+        await StrategyBalancerPool__factory.connect(strategy.address, signer).initialize(
           core.controller.address,
           vaultAddress,
           depositToken,
           poolId,
-          rewardPool,
+          gauge,
           buybackRatio,
         );
 
-        await StrategyAura__factory.connect(strategy.address, signer).setGovRewardsConsumer(signer.address)
+        await BalLocker__factory.connect(EthAddresses.BAL_LOCKER, await DeployerUtilsLocal.impersonate())
+          .linkDepositorsToGauges([strategy.address], [gauge]);
 
         return strategy;
       },
@@ -96,7 +90,7 @@ describe('Aura_USDC_WUSDR_Test', async () => {
     _strategy: IStrategy,
     _balanceTolerance: number
   ) => {
-    const hw = new AuraSpecificHardWork(
+    const hw = new BalancerLpSpecificHardWork(
       _signer,
       _user,
       _core,
@@ -109,8 +103,6 @@ describe('Aura_USDC_WUSDR_Test', async () => {
     );
     hw.checkToClaim = false;
     hw.checkPsSharePrice = false;
-    hw.vaultRt = Misc.ZERO_ADDRESS;
-    hw.allowLittleDustInStrategyAfterFullExit = parseUnits('10');
     return hw;
   };
 

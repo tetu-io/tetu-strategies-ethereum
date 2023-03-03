@@ -175,14 +175,14 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
   /// @dev Withdraw LP tokens
   function withdrawAndClaimFromPool(uint amount) internal override {
     if (amount != 0) {
-      auraRewardPool.withdrawAndUnwrap(amount, true);
+      auraRewardPool.withdrawAndUnwrap(amount, false);
     }
     _doHardWork(true, false);
   }
 
   /// @dev Emergency withdraw all from a gauge
   function emergencyWithdrawFromPool() internal override {
-    auraRewardPool.withdrawAndUnwrap(auraRewardPool.balanceOf(address(this)), true);
+    auraRewardPool.withdrawAndUnwrap(auraRewardPool.balanceOf(address(this)), false);
   }
 
   /// @dev Make something useful with rewards
@@ -348,5 +348,5 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
 
 
   //slither-disable-next-line unused-state
-  uint[45] private ______gap;
+  uint[43] private ______gap;
 }

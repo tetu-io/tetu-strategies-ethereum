@@ -40,7 +40,7 @@ export class StrategyTestUtils {
       strategyDeployer,
       core.controller,
       core.vaultController,
-      core.psVault.address,
+      Misc.ZERO_ADDRESS,
       signer,
       60 * 60 * 24 * 28,
       depositFee
@@ -49,19 +49,19 @@ export class StrategyTestUtils {
     const vault = data[1] as ISmartVault;
     const strategy = data[2] as IStrategy;
 
-    const rewardTokenLp = await UniswapUtils.createTetuUsdc(
-      signer, core, "10000"
-    );
-    log.info("LP created");
+    // const rewardTokenLp = await UniswapUtils.createTetuUsdc(
+    //   signer, core, "10000"
+    // );
+    // log.info("LP created");
 
-    await core.feeRewardForwarder.addLargestLps([core.rewardToken.address], [rewardTokenLp]);
-    log.info("Path setup completed");
+    // await core.feeRewardForwarder.addLargestLps([core.rewardToken.address], [rewardTokenLp]);
+    // log.info("Path setup completed");
 
     expect((await strategy.underlying()).toLowerCase()).is.eq(underlying.toLowerCase());
     expect((await vault.underlying()).toLowerCase()).is.eq(underlying.toLowerCase());
 
     Misc.printDuration('Vault and strategy deployed and initialized', start);
-    return [vault, strategy, rewardTokenLp];
+    return [vault, strategy, Misc.ZERO_ADDRESS];
   }
 
   public static async checkStrategyRewardsBalance(strategy: IStrategy, balances: string[]) {
@@ -117,38 +117,6 @@ export class StrategyTestUtils {
     expect(await strategy.pausedInvesting()).is.eq(true);
     await strategy.continueInvesting();
     expect(await strategy.pausedInvesting()).is.eq(false);
-  }
-
-  public static async initForwarder(forwarder: IFeeRewardForwarder) {
-    const start = Date.now();
-    await forwarder.setLiquidityNumerator(30);
-    await forwarder.setLiquidityRouter(await DeployerUtilsLocal.getRouterByFactory(await DeployerUtilsLocal.getDefaultNetworkFactory()));
-    // please set liquidation path for each test individually
-    await StrategyTestUtils.setConversionPaths(forwarder);
-    Misc.printDuration('Forwarder initialized', start);
-  }
-
-  public static async setConversionPaths(forwarder: IFeeRewardForwarder) {
-    const net = (await ethers.provider.getNetwork()).chainId;
-    const bc: string[] = JSON.parse(readFileSync(`./test/strategies/data/${net}/bc.json`, 'utf8'));
-
-    const batch = 20;
-    for (let i = 0; i < bc.length / batch; i++) {
-      const l = bc.slice(i * batch, i * batch + batch)
-      log.info('addBlueChipsLps', l.length);
-      await forwarder.addBlueChipsLps(l);
-    }
-
-    const tokens: string[] = JSON.parse(readFileSync(`./test/strategies/data/${net}/tokens.json`, 'utf8'));
-    const lps: string[] = JSON.parse(readFileSync(`./test/strategies/data/${net}/lps.json`, 'utf8'));
-    for (let i = 0; i < tokens.length / batch; i++) {
-      const t = tokens.slice(i * batch, i * batch + batch)
-      const l = lps.slice(i * batch, i * batch + batch)
-      // log.info('t', t)
-      // log.info('l', l)
-      log.info('addLargestLps', t.length);
-      await forwarder.addLargestLps(t, l);
-    }
   }
 
   public static async deployCoreAndInit(deployInfo: DeployInfo, deploy: boolean) {

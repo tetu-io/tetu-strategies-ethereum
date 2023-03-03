@@ -23,6 +23,7 @@ export class EthAddresses {
   public static rETH_TOKEN = "0xae78736Cd615f374D3085123A210448E74Fc6393".toLowerCase();
   public static STG_TOKEN = "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6".toLowerCase();
   public static AURA_TOKEN = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF".toLowerCase();
+  public static wUSDR_TOKEN = "0xD5a14081a34d256711B02BbEf17E567da48E80b5".toLowerCase();
 
 
   // balancer
@@ -63,6 +64,10 @@ export class EthAddresses {
   public static BALANCER_STG_bbaUSD = "0x4ce0BD7deBf13434d3ae127430e9BD4291bfB61f".toLowerCase();
   public static BALANCER_STG_bbaUSD_ID = "0x4ce0bd7debf13434d3ae127430e9bd4291bfb61f00020000000000000000038b".toLowerCase();
   public static BALANCER_STG_bbaUSD_GAUGE = "0x9703C0144e8b68280b97d9e30aC6f979Dd6A38d7".toLowerCase();
+
+  public static BALANCER_wUSDR_USDC = "0x831261f44931b7da8ba0dcc547223c60bb75b47f".toLowerCase();
+  public static BALANCER_wUSDR_USDC_ID = "0x831261f44931b7da8ba0dcc547223c60bb75b47f000200000000000000000460".toLowerCase();
+  public static BALANCER_wUSDR_USDC_GAUGE = "0xe9866B9dc2c1213433f614CbB22EdAA0FAFF9a66".toLowerCase();
 
   public static BALANCER_USDC_WUSDR = "0x831261f44931B7dA8ba0DcC547223c60BB75B47F".toLowerCase();
   public static BALANCER_USDC_WUSDR_ID = "0x831261f44931b7da8ba0dcc547223c60bb75b47f000200000000000000000460".toLowerCase();

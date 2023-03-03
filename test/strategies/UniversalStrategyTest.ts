@@ -73,7 +73,7 @@ async function universalStrategyTest(
       if (ppfsDecreaseAllowed) {
         await core.vaultController.changePpfsDecreasePermissions([vault.address], true);
       }
-      await VaultUtils.addRewardsXTetu(signer, vault, core, 1);
+      // await VaultUtils.addRewardsXTetu(signer, vault, core, 1);
 
       // set class variables for keep objects links
       deployInfo.signer = signer;
