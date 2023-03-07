@@ -76,6 +76,7 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
 
     auraRewardPool = IBaseRewardPool(auraRewardPool_);
     IERC20(_getPoolAddress(poolId_)).safeApprove(address(AURA_BOOSTER), type(uint).max);
+    auraPoolId = auraRewardPool.pid();
 
     govRewardsConsumer = IController(controller_).governance();
 
@@ -168,7 +169,7 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
   function depositToPool(uint amount) internal override {
     _doHardWork(true, false);
     if (amount != 0) {
-      AURA_BOOSTER.deposit(auraRewardPool.pid(), amount, true);
+      AURA_BOOSTER.deposit(auraPoolId, amount, true);
     }
   }
 

@@ -80,6 +80,7 @@ export class EthAddresses {
   public static AURA_USDC_WUSDR_REWARD_POOL = "0x2a596E721A9F1824F36c484e71f5bE80675Cca2b".toLowerCase();
   public static AURA_wstETH_WETH_REWARD_POOL = "0xe4683fe8f53da14ca5dac4251eadfb3aa614d528".toLowerCase();
   public static AURA_bbaUSD_REWARD_POOL = "0xfb6b1c1a1ea5618b3cfc20f81a11a97e930fa46b".toLowerCase();
+  public static AURA_rETH_WETH_REWARD_POOL = "0x001B78CEC62DcFdc660E06A91Eb1bC966541d758".toLowerCase();
 
   public static BLUE_CHIPS = new Set<string>([
     EthAddresses.USDC_TOKEN,

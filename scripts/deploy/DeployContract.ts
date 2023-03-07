@@ -3,6 +3,7 @@ import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {Libraries} from "hardhat-deploy/dist/types";
 import {Logger} from "tslog";
 import logSettings from "../../log_settings";
+import {formatUnits, parseUnits} from "ethers/lib/utils";
 
 const log: Logger = new Logger(logSettings);
 
@@ -19,14 +20,20 @@ export async function deployContract<T extends ContractFactory>(
   // tslint:disable-next-line:no-any
   ...args: any[]
 ) {
-  await hre.run("compile")
-  const web3 = hre.web3;
   const ethers = hre.ethers;
-  log.info(`Deploying ${name}`);
-  log.info("Account balance: " + utils.formatUnits(await signer.getBalance(), 18));
-
+  const web3 = hre.web3;
   const gasPrice = await web3.eth.getGasPrice();
-  log.info("Gas price: " + gasPrice);
+
+  if (hre.network.name !== 'hardhat') {
+    await hre.run("compile")
+    log.info(`Deploying ${name}`);
+    log.info("Account balance: " + utils.formatUnits(await signer.getBalance(), 18));
+    log.info("Gas price: " + formatUnits(gasPrice, 9));
+    if (+formatUnits(gasPrice, 9) > 30) {
+      console.log("Gas price is too high");
+      process.exit(-1);
+    }
+  }
   const lib: string | undefined = libraries.get(name);
   let _factory;
   if (lib) {
@@ -54,7 +61,11 @@ export async function deployContract<T extends ContractFactory>(
   //   gas = 5_000_000;
   // }
   // const instance = await _factory.deploy(...args, {gasLimit: gas, gasPrice: Math.floor(+gasPrice * 1.1)});
-  const instance = await _factory.deploy(...args, {gasLimit: 9_000_000, gasPrice: Math.floor(+gasPrice * 1.1)});
+  const instance = await _factory.deploy(...args, {
+    gasLimit: 9_000_000,
+    maxFeePerGas: Math.floor(+gasPrice * 1.1),
+    maxPriorityFeePerGas: parseUnits('1', 9),
+  });
   log.info('Deploy tx:', instance.deployTransaction.hash);
   await instance.deployed();
 

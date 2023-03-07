@@ -50,4 +50,6 @@ interface IBalLocker {
 
   function claimRewardsFromMinter(address gauge, address receiver) external returns (uint claimed);
 
+  function changeDepositorToGaugeLink(address gauge, address newDepositor) external;
+
 }

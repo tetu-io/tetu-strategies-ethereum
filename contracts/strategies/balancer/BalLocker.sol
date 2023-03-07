@@ -279,7 +279,7 @@ contract BalLocker is ControllableV2, IBalLocker {
 
   /// @dev Transfer control under a gauge to another address.
   ///      Should have strict control and time-lock in the implementation.
-  function changeDepositorToGaugeLink(address gauge, address newDepositor) external {
+  function changeDepositorToGaugeLink(address gauge, address newDepositor) external override {
     address depositor = gaugesToDepositors[gauge];
     require(depositor == msg.sender, "Not depositor");
     gaugesToDepositors[gauge] = newDepositor;

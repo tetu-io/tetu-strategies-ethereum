@@ -2,14 +2,15 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {
-  BalLocker,
-  ControllerMinimal,
-  IBVault__factory,
+  BalDepositorChanger, BalDepositorChanger__factory,
+  BalLocker, BalLocker__factory,
+  ControllerMinimal, ERC20__factory, IAnnouncer__factory,
+  IBVault__factory, IController__factory,
   IERC20__factory,
   IFeeDistributor__factory,
   IGauge,
   IGauge__factory,
-  IVotingEscrow__factory
+  IVotingEscrow__factory, TetuProxyControlled__factory
 } from "../../../typechain";
 import {EthAddresses} from "../../../scripts/addresses/EthAddresses";
 import {TimeUtils} from "../../TimeUtils";
@@ -34,7 +35,7 @@ describe("Bal locker tests", function () {
     this.timeout(1200000);
     snapshotBefore = await TimeUtils.snapshot();
 
-    if((await ethers.provider.getNetwork()).chainId !== 1) {
+    if ((await ethers.provider.getNetwork()).chainId !== 1) {
       return;
     }
     [signer, distributor] = await ethers.getSigners();
@@ -158,7 +159,7 @@ describe("Bal locker tests", function () {
     // *** ADD VE REWARDS ***
     const amountDistribute = parseUnits('100');
     await TokenUtils.getToken(EthAddresses.BAL_TOKEN, distributor.address, amountDistribute);
-    await IERC20__factory.connect(EthAddresses.BAL_TOKEN, distributor).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amountDistribute);
+    await ERC20__factory.connect(EthAddresses.BAL_TOKEN, distributor).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amountDistribute);
     await IFeeDistributor__factory.connect(EthAddresses.BALANCER_FEE_DISTRIBUTOR, distributor).depositToken(EthAddresses.BAL_TOKEN, amountDistribute);
 
     await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
@@ -251,6 +252,24 @@ describe("Bal locker tests", function () {
 
     await locker.changeDepositorToGaugeLink(EthAddresses.BALANCER_GAUGE_USDC_WETH, distributor.address);
     expect(await locker.gaugesToDepositors(EthAddresses.BALANCER_GAUGE_USDC_WETH)).eq(distributor.address);
+  });
+
+  it("changeDepositorToGaugeLink BB-AM-USD test", async () => {
+    if ((await ethers.provider.getNetwork()).chainId !== 1) {
+      return;
+    }
+
+    const changer = await DeployerUtilsLocal.deployContract(signer, 'BalDepositorChanger')
+    const strategy = TetuProxyControlled__factory.connect('0xC4Ea3ca488b9E9c648d6217ea5d988774a5B389b', signer);
+    const core = await DeployerUtilsLocal.getCoreAddresses();
+    const gov = await DeployerUtilsLocal.impersonate();
+    await IAnnouncer__factory.connect(core.announcer, gov).announceTetuProxyUpgrade(strategy.address, changer.address);
+    await TimeUtils.advanceBlocksOnTs(60 * 60 * 48);
+    await IController__factory.connect(core.controller, gov).upgradeTetuProxyBatch([strategy.address], [changer.address]);
+    expect(await BalDepositorChanger__factory.connect(strategy.address, signer).controller()).eq(core.controller);
+
+    await BalDepositorChanger__factory.connect(strategy.address, gov).change(EthAddresses.BALANCER_bbaUSD_GAUGE, distributor.address);
+    expect(await BalLocker__factory.connect(EthAddresses.BAL_LOCKER, signer).gaugesToDepositors(EthAddresses.BALANCER_bbaUSD_GAUGE)).eq(distributor.address);
   });
 
 });
