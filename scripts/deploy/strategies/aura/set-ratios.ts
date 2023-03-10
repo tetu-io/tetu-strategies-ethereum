@@ -1,10 +1,12 @@
 import {IStrategySplitter__factory} from "../../../../typechain";
 import {ethers} from "hardhat";
 import {RunHelper} from "../../../utils/tools/RunHelper";
+import {DeployerUtilsLocal} from "../../DeployerUtilsLocal";
 
 
 async function main() {
   const signer = (await ethers.getSigners())[0];
+  // const signer = await DeployerUtilsLocal.impersonate()
 
   await RunHelper.runAndWait(() => IStrategySplitter__factory.connect('0x3c055f4a2B7234a4D807a29244403B5A44648a1F', signer).setStrategyRatios(
     ['0x1C8F4e0b739090De64D0C33c89950CEc791AC7AF', '0xA19f92D23B4cde7B145fe0539e17FC93A4a61316'],

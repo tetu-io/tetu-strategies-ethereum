@@ -124,6 +124,6 @@ export default {
     path: './artifacts/abi',
     runOnCompile: false,
     spacing: 2,
-    pretty: true,
+    pretty: false,
   }
 };

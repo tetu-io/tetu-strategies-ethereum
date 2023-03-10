@@ -33,7 +33,7 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "AuraStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.0.0";
+  string public constant VERSION = "1.0.1";
 
   uint private constant PRICE_IMPACT_TOLERANCE = 10_000;
   IBVault public constant BALANCER_VAULT = IBVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
@@ -167,7 +167,8 @@ abstract contract AuraStrategyBase is ProxyStrategyBase {
 
   /// @dev Deposit LP tokens to booster
   function depositToPool(uint amount) internal override {
-    _doHardWork(true, false);
+    //    _doHardWork(true, false);
+    amount = IERC20(_underlying()).balanceOf(address(this));
     if (amount != 0) {
       AURA_BOOSTER.deposit(auraPoolId, amount, true);
     }
