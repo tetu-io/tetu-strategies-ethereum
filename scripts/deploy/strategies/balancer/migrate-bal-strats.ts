@@ -20,6 +20,7 @@ async function main() {
 
   const vaults = await IBookkeeper__factory.connect(core.bookkeeper, signer).vaults();
 
+  const strategies: string[] = [];
   for (const vault of vaults) {
     const strategy = await ISmartVault__factory.connect(vault, signer).strategy({blockTag: BLOCK});
     const newStrategy = await ISmartVault__factory.connect(vault, signer).strategy();
@@ -29,9 +30,13 @@ async function main() {
         const name = await ISmartVault__factory.connect(vault, signer).symbol();
         const nameS = await IStrategy__factory.connect(strategy, signer).STRATEGY_NAME();
         console.log(`${name} strategy ${nameS} ${strategy}`);
+        strategies.push(strategy);
       }
     }
   }
+  // !!!!!!!!!!! >>>> STRAT oldStrat: 0x331A0041BD9A66592b85a4866c7AC51218F60A20 gauge: 0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE newStrat: 0x4C8a0Ba0cB03CedbcAA24A46C9a347FCbD97Af09
+  // !!!!!!!!!!! >>>> STRAT oldStrat: 0xC4Ea3ca488b9E9c648d6217ea5d988774a5B389b gauge: 0xa6325e799d266632D347e41265a69aF111b05403 newStrat: 0xA19f92D23B4cde7B145fe0539e17FC93A4a61316
+  // !!!!!!!!!!! >>>> STRAT oldStrat: 0x0FdE9432bAE1f8cfB2e697DC496e61323AA8DDD8 gauge: 0x79eF6103A513951a3b25743DB509E267685726B7 newStrat: 0x673abC7cfcEeA4cE211d606E5213bDaad7Ec6FE6
 
 }
 

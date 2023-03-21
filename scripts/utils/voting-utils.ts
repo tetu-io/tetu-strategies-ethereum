@@ -72,7 +72,7 @@ export async function getGaugesJSON() {
 }
 
 // tslint:disable-next-line:no-any
-export function poolNameToPoolAdr(poolName: string, gauges: any[]): string {
+export function poolNameToGaugeAdr(poolName: string, gauges: any[]): string {
   try {
     const poolAdrConct = '0x' + poolName.split('(0x')[1].split(')')[0].trim();
     const poolNameConct = poolName.split('(0x')[0].trim();
@@ -94,11 +94,11 @@ export function poolNameToPoolAdr(poolName: string, gauges: any[]): string {
 }
 
 // tslint:disable-next-line:no-any
-export function poolAdrToName(poolAdr: string, gauges: any[]) {
+export function gaugeAdrToName(gaugeAdr: string, gauges: any[]) {
   // tslint:disable-next-line:no-any
   return Array.from(gauges).filter((el: any) => {
     // tslint:disable-next-line:no-string-literal
     const adr: string = el['address']
-    return adr.toLowerCase() === poolAdr.toLowerCase()
+    return adr.toLowerCase() === gaugeAdr.toLowerCase()
   })[0]['pool']['symbol'];
 }
