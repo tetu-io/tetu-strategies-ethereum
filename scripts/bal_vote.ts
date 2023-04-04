@@ -16,7 +16,11 @@ type VOTE = {
   vote: number
 }
 
-const CURRENT_PROPOSAL = '0x550b9bc05ff51cdc41509efb0de891d4041ba7e66d569a96b6a741b73839a1f1';
+const changeVoteTo = new Map<string, string>([
+  // ['0xE629c43BCad1029E12ED51432B9dd3432b656cc9'.toLowerCase(), '0x28D4FE67c68d340fe66CfbCBe8e2cd279d8AA6dD'.toLowerCase()],
+]);
+
+const CURRENT_PROPOSAL = '0x5e843160c27645bb8b42d6eb75adc4fdb03858081bec18f5d92b2fe9befd4533';
 
 async function main() {
   const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
@@ -44,7 +48,12 @@ async function main() {
     }
     sumPercent += vote;
     // console.log(pool, vote)
-    const gaugeAdr = poolNameToGaugeAdr(pool, gauges);
+    let gaugeAdr = poolNameToGaugeAdr(pool, gauges);
+    if (changeVoteTo.has(gaugeAdr)) {
+      console.log('POOL CHANGED!', pool, vote)
+      gaugeAdr = changeVoteTo.get(gaugeAdr) ?? 'ERROR';
+    }
+
     currentVotesMap.set(gaugeAdr, vote);
     votesFromCurrentProposal.push({
       gaugeAdr: gaugeAdr,
