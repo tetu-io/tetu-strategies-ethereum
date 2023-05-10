@@ -115,6 +115,17 @@ export class DeployerUtilsLocal {
     return [proxy, logic];
   }
 
+  public static async deployTetuProxyGov<T extends ContractFactory>(
+    signer: SignerWithAddress,
+    logicContractName: string,
+  ) {
+    const logic = await DeployerUtilsLocal.deployContract(signer, logicContractName);
+    await DeployerUtilsLocal.wait(5);
+    const proxy = await DeployerUtilsLocal.deployContract(signer, "TetuProxyGov", logic.address);
+    await DeployerUtilsLocal.wait(5);
+    return [proxy, logic];
+  }
+
 
   public static async deployStrategyProxy(signer: SignerWithAddress, strategyName: string): Promise<IStrategy> {
     const logic = await DeployerUtilsLocal.deployContract(signer, strategyName);

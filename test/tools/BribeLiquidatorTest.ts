@@ -16,7 +16,7 @@ describe('BribeLiquidatorTest', function () {
 
     const core = await DeployerUtilsLocal.getCoreAddresses();
 
-    const data = await DeployerUtilsLocal.deployTetuProxyControlled(signer, 'BribeLiquidator');
+    const data = await DeployerUtilsLocal.deployTetuProxyGov(signer, 'BribeLiquidator');
     const resolver = BribeLiquidator__factory.connect(data[0].address, signer);
 
     await resolver.initialize(core.controller);
