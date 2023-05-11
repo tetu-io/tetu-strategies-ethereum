@@ -18,7 +18,7 @@ import "../../third_party/aura/IBooster.sol";
 import "../../third_party/aura/IBaseRewardPool.sol";
 import "../../third_party/aura/IVirtualBalanceRewardPool.sol";
 import "../../third_party/aura/IAura.sol";
-import "../../interface/ITetuLiquidator.sol";
+import "../../interfaces/ITetuLiquidator.sol";
 
 /// @title Base contract for BPT farming with Aura
 /// @author a17

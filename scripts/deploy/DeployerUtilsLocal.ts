@@ -41,7 +41,7 @@ import { deployContract } from "./DeployContract";
 
 // tslint:disable-next-line:no-var-requires
 const hre = require("hardhat");
-const log: Logger = new Logger(logSettings);
+const log: Logger<undefined> = new Logger(logSettings);
 
 
 const VAULT_LOGIC = '0xc8Be20e84E608c9c17422a4928D77Cb7c677d260'

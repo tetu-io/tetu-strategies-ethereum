@@ -12,9 +12,9 @@
 
 pragma solidity 0.8.4;
 
-import "./interface/IControllable.sol";
-import "./interface/IControllableExtended.sol";
-import "./interface/ITetuProxy.sol";
+import "./interfaces/IControllable.sol";
+import "./interfaces/IControllableExtended.sol";
+import "./interfaces/ITetuProxy.sol";
 import "@tetu_io/tetu-contracts/contracts/base/UpgradeableProxy.sol";
 
 /// @title EIP1967 Upgradable proxy implementation.

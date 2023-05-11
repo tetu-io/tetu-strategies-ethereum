@@ -9,7 +9,7 @@ import {DeployerUtilsLocal} from "../scripts/deploy/DeployerUtilsLocal";
 import axios from "axios";
 import {IPriceCalculator, IPriceCalculator__factory} from "../typechain";
 
-const log: Logger = new Logger(logSettings);
+const log: Logger<undefined> = new Logger(logSettings);
 
 export class PriceCalculatorUtils {
 

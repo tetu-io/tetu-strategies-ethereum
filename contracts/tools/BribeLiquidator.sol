@@ -3,12 +3,12 @@
 pragma solidity 0.8.4;
 
 import "@tetu_io/tetu-contracts/contracts/openzeppelin/SafeERC20.sol";
-import "@tetu_io/tetu-contracts/contracts/base/interface/ITetuLiquidator.sol";
+import "@tetu_io/tetu-contracts/contracts/openzeppelin/EnumerableSet.sol";
+import "@tetu_io/tetu-contracts/contracts/base/interfaces/ITetuLiquidator.sol";
 import "@tetu_io/tetu-contracts/contracts/base/governance/ControllableV2.sol";
 import "../third_party/paladin/IMultiMerkleDistributor.sol";
 import "../third_party/hh/IRewardDistributor.sol";
 import "../third_party/polygon/IRootChainManager.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract BribeLiquidator is ControllableV2 {
   using SafeERC20 for IERC20;
@@ -34,6 +34,7 @@ contract BribeLiquidator is ControllableV2 {
   uint public maxGas;
   uint public lastCall;
   EnumerableSet.AddressSet internal whitelistedTokens;
+  uint public perfFee;
 
   // ----- INITIALIZER -------
 
@@ -41,6 +42,7 @@ contract BribeLiquidator is ControllableV2 {
     ControllableV2.initializeControllable(controller_);
 
     maxGas = 70 gwei;
+    perfFee = 20;
   }
 
   // ----- CONTROL -------
@@ -53,6 +55,12 @@ contract BribeLiquidator is ControllableV2 {
   function setMaxGas(uint _maxGas) external {
     require(IController(_controller()).governance() == msg.sender, "FORBIDDEN");
     maxGas = _maxGas;
+  }
+
+  function setPerfFee(uint fee) external {
+    require(IController(_controller()).governance() == msg.sender, "FORBIDDEN");
+    require(fee >= 20, "WRONG");
+    perfFee = fee;
   }
 
   function whitelist(address[] memory tokens, bool add) external {
@@ -120,10 +128,21 @@ contract BribeLiquidator is ControllableV2 {
     amountUSDC = IERC20(USDC).balanceOf(address(this));
 
     if (amountUSDC != 0) {
-      address predicate = POLYGON_BRIDGE.typeToPredicate(POLYGON_BRIDGE.tokenToType(USDC));
-      require(predicate != address(0), "INVALID_PREDICATE");
-      _approveIfNeed(USDC, predicate, amountUSDC);
-      POLYGON_BRIDGE.depositFor(COMMUNITY_MSIG, USDC, abi.encode(amountUSDC));
+
+      uint toFess = amountUSDC / perfFee;
+      uint toBridge = amountUSDC - toFess;
+
+      if (toFess != 0) {
+        address gov = IController(_controller()).governance();
+        IERC20(USDC).safeTransfer(gov, toFess);
+      }
+
+      if (toBridge != 0) {
+        address predicate = POLYGON_BRIDGE.typeToPredicate(POLYGON_BRIDGE.tokenToType(USDC));
+        require(predicate != address(0), "INVALID_PREDICATE");
+        _approveIfNeed(USDC, predicate, toBridge);
+        POLYGON_BRIDGE.depositFor(COMMUNITY_MSIG, USDC, abi.encode(toBridge));
+      }
     }
 
     lastCall = block.timestamp;

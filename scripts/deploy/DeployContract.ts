@@ -5,7 +5,7 @@ import {Logger} from "tslog";
 import logSettings from "../../log_settings";
 import {formatUnits, parseUnits} from "ethers/lib/utils";
 
-const log: Logger = new Logger(logSettings);
+const log: Logger<undefined> = new Logger(logSettings);
 
 const libraries = new Map<string, string>([
   ['SmartVault', 'VaultLibrary'],

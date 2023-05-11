@@ -13,7 +13,7 @@
 import "@tetu_io/tetu-contracts/contracts/base/governance/ControllableV2.sol";
 import "../third_party/uniswap/IUniswapV2Factory.sol";
 import "../third_party/uniswap/IUniswapV2Pair.sol";
-import "../interface/ISmartVault.sol";
+import "../interfaces/ISmartVault.sol";
 import "../third_party/curve/ICurveLpToken.sol";
 import "../third_party/curve/ICurveMinter.sol";
 import "../third_party/IERC20Extended.sol";

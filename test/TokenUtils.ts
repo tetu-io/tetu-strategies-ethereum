@@ -1,7 +1,6 @@
 import {ethers} from "hardhat";
 import {
-  ERC20__factory,
-  IERC721Enumerable__factory,
+  IERC20__factory, IERC20Extended__factory,
   IRewardToken__factory,
   IWmatic__factory
 } from "../typechain";
@@ -41,31 +40,25 @@ export class TokenUtils {
   ]);
 
   public static async balanceOf(tokenAddress: string, account: string): Promise<BigNumber> {
-    return ERC20__factory.connect(tokenAddress, ethers.provider).balanceOf(account);
+    return IERC20__factory.connect(tokenAddress, ethers.provider).balanceOf(account);
   }
 
   public static async totalSupply(tokenAddress: string): Promise<BigNumber> {
-    return ERC20__factory.connect(tokenAddress, ethers.provider).totalSupply();
+    return IERC20__factory.connect(tokenAddress, ethers.provider).totalSupply();
   }
 
   public static async approve(tokenAddress: string, signer: SignerWithAddress, spender: string, amount: string) {
     console.log('approve', await TokenUtils.tokenSymbol(tokenAddress), amount);
-    return ERC20__factory.connect(tokenAddress, signer).approve(spender, BigNumber.from(amount));
-  }
-
-  public static async approveNFT(tokenAddress: string, signer: SignerWithAddress, spender: string, id: string) {
-    console.log('approve', await TokenUtils.tokenSymbol(tokenAddress), id);
-    await TokenUtils.checkNftBalance(tokenAddress, signer.address, id);
-    return ERC20__factory.connect(tokenAddress, signer).approve(spender, id);
+    return IERC20__factory.connect(tokenAddress, signer).approve(spender, BigNumber.from(amount));
   }
 
   public static async allowance(tokenAddress: string, signer: SignerWithAddress, spender: string): Promise<BigNumber> {
-    return ERC20__factory.connect(tokenAddress, signer).allowance(signer.address, spender);
+    return IERC20__factory.connect(tokenAddress, signer).allowance(signer.address, spender);
   }
 
   public static async transfer(tokenAddress: string, signer: SignerWithAddress, destination: string, amount: string) {
     console.log('transfer', await TokenUtils.tokenSymbol(tokenAddress), amount);
-    return ERC20__factory.connect(tokenAddress, signer).transfer(destination, BigNumber.from(amount))
+    return IERC20__factory.connect(tokenAddress, signer).transfer(destination, BigNumber.from(amount))
   }
 
   public static async wrapNetworkToken(signer: SignerWithAddress, amount: string) {
@@ -74,41 +67,21 @@ export class TokenUtils {
   }
 
   public static async decimals(tokenAddress: string): Promise<number> {
-    return ERC20__factory.connect(tokenAddress, ethers.provider).decimals();
+    return IERC20Extended__factory.connect(tokenAddress, ethers.provider).decimals();
   }
 
   public static async tokenName(tokenAddress: string): Promise<string> {
-    return ERC20__factory.connect(tokenAddress, ethers.provider).name();
+    return IERC20Extended__factory.connect(tokenAddress, ethers.provider).name();
   }
 
   public static async tokenSymbol(tokenAddress: string): Promise<string> {
-    return ERC20__factory.connect(tokenAddress, ethers.provider).symbol();
+    return IERC20Extended__factory.connect(tokenAddress, ethers.provider).symbol();
   }
 
   public static async checkBalance(tokenAddress: string, account: string, amount: string) {
     const bal = await TokenUtils.balanceOf(tokenAddress, account);
     expect(bal.gt(BigNumber.from(amount))).is.eq(true, 'Balance less than amount');
     return bal;
-  }
-
-  public static async tokenOfOwnerByIndex(tokenAddress: string, account: string, index: number) {
-    return IERC721Enumerable__factory.connect(tokenAddress, ethers.provider).tokenOfOwnerByIndex(account, index);
-  }
-
-  public static async checkNftBalance(tokenAddress: string, account: string, id: string) {
-    const nftCount = (await TokenUtils.balanceOf(tokenAddress, account)).toNumber();
-    let found = false;
-    let tokenId;
-    for (let i = 0; i < nftCount; i++) {
-      tokenId = await TokenUtils.tokenOfOwnerByIndex(tokenAddress, account, i);
-      console.log('NFT', tokenId)
-      if (tokenId.toString() === id) {
-        found = true;
-        break;
-      }
-    }
-    expect(found).is.eq(true);
-    return tokenId;
   }
 
   public static async getToken(token: string, to: string, amount?: BigNumber) {

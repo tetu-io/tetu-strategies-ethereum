@@ -16,7 +16,7 @@ import "@tetu_io/tetu-contracts/contracts/base/strategies/ProxyStrategyBase.sol"
 import "../../third_party/balancer/IBalancerGaugeEth.sol";
 import "../../third_party/balancer/IBVault.sol";
 import "./IBalLocker.sol";
-import "../../interface/ITetuLiquidator.sol";
+import "../../interfaces/ITetuLiquidator.sol";
 
 /// @title Base contract for BPT farming using ve boost
 /// @author belbix
