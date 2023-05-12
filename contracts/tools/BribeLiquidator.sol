@@ -35,6 +35,7 @@ contract BribeLiquidator is ControllableV2 {
   uint public lastCall;
   EnumerableSet.AddressSet internal whitelistedTokens;
   uint public perfFee;
+  address public feeRecipient;
 
   // ----- INITIALIZER -------
 
@@ -43,6 +44,7 @@ contract BribeLiquidator is ControllableV2 {
 
     maxGas = 70 gwei;
     perfFee = 20;
+    feeRecipient = IController(controller_).governance();
   }
 
   // ----- CONTROL -------
@@ -50,6 +52,11 @@ contract BribeLiquidator is ControllableV2 {
   function setGelato(address adr) external {
     require(IController(_controller()).governance() == msg.sender, "FORBIDDEN");
     gelato = adr;
+  }
+
+  function setFeeRecipient(address adr) external {
+    require(IController(_controller()).governance() == msg.sender, "FORBIDDEN");
+    feeRecipient = adr;
   }
 
   function setMaxGas(uint _maxGas) external {
@@ -133,8 +140,7 @@ contract BribeLiquidator is ControllableV2 {
       uint toBridge = amountUSDC - toFess;
 
       if (toFess != 0) {
-        address gov = IController(_controller()).governance();
-        IERC20(USDC).safeTransfer(gov, toFess);
+        IERC20(USDC).safeTransfer(feeRecipient, toFess);
       }
 
       if (toBridge != 0) {
