@@ -29,7 +29,7 @@ export async function deployContract<T extends ContractFactory>(
     log.info(`Deploying ${name}`);
     log.info("Account balance: " + utils.formatUnits(await signer.getBalance(), 18));
     log.info("Gas price: " + formatUnits(gasPrice, 9));
-    if (+formatUnits(gasPrice, 9) > 30) {
+    if (+formatUnits(gasPrice, 9) > 50) {
       console.log("Gas price is too high");
       process.exit(-1);
     }
