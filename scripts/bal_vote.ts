@@ -20,7 +20,7 @@ const changeVoteTo = new Map<string, string>([
   // ['0xE629c43BCad1029E12ED51432B9dd3432b656cc9'.toLowerCase(), '0x28D4FE67c68d340fe66CfbCBe8e2cd279d8AA6dD'.toLowerCase()],
 ]);
 
-const CURRENT_PROPOSAL = '0x5f4cd1fd2edff65587af82b23f54e2bf2c4a79f499ccfb09f89272ff121d8088';
+const CURRENT_PROPOSAL = '0x274f13b610d1355058b5a5e279f6fa057c904531c6d481afe264d5c17baaffed';
 
 async function main() {
   const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
@@ -172,7 +172,7 @@ async function main() {
   for (const gauge of Array.from(votesMap.keys())) {
     console.log(gaugeAdrToName(gauge, gauges), '=>', ((votesMap.get(gauge) ?? 0) / 100) + '%');
   }
-  console.log('-----------------------------------------------------------------------------------')
+  console.log('----- CREATE TX WITH THIS DATA voteForManyGagues------------------------------------------------------------------------------')
 
 
   for (const gauge of Array.from(votesMap.keys())) {
@@ -181,6 +181,7 @@ async function main() {
   for (const weight of Array.from(votesMap.values())) {
     console.log(weight + ',')
   }
+  console.log('-----------------------------------------------------------------------------------')
 
   // VOTE ONE BY ONE for detect issues
   // for (const gauge of Array.from(votesMap.keys())) {
@@ -199,9 +200,9 @@ async function main() {
   }
 
 
-  for (let pool of Array.from(newVotes.keys())) {
-    console.log(gaugeAdrToName(pool, gauges), newVotes.get(pool));
-  }
+  // for (let pool of Array.from(newVotes.keys())) {
+  //   console.log(gaugeAdrToName(pool, gauges), newVotes.get(pool));
+  // }
 
 
 }

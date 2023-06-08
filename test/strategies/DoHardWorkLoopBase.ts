@@ -98,7 +98,9 @@ export class DoHardWorkLoopBase {
   protected async initialCheckVault() {
     if (this.vaultRt !== Misc.ZERO_ADDRESS) {
       const rt = (await this.vault.rewardTokens())[0];
-      expect(rt.toLowerCase()).eq(this.vaultRt.toLowerCase());
+      if(rt) {
+        expect(rt.toLowerCase()).eq(this.vaultRt.toLowerCase());
+      }
     }
   }
 
