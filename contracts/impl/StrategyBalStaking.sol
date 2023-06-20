@@ -18,8 +18,6 @@ contract StrategyBalStaking is BalStakingStrategyBase {
   // !!! ONLY CONSTANTS AND DYNAMIC ARRAYS/MAPS !!!
   // push elements to arrays instead of predefine setup
   address private constant _BPT_BAL_WETH = 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56;
-  address private constant _BAL = 0xba100000625a3754423978a60c9317c58a424e3D;
-  address private constant _WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
   address[] private _assets;
   address[] private _poolRewards;
 
@@ -29,9 +27,10 @@ contract StrategyBalStaking is BalStakingStrategyBase {
     address depositor_,
     address veLocker_
   ) external initializer {
-    _assets.push(_BAL);
-    _assets.push(_WETH);
-    _poolRewards.push(_BAL);
+    _assets.push(_BAL_TOKEN);
+    _assets.push(_WETH_TOKEN);
+    _poolRewards.push(_BAL_TOKEN);
+    _poolRewards.push(_BB_USD_TOKEN);
     BalStakingStrategyBase.initializeStrategy(
       controller_,
       _BPT_BAL_WETH,
