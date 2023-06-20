@@ -20,7 +20,7 @@ const changeVoteTo = new Map<string, string>([
   // ['0xE629c43BCad1029E12ED51432B9dd3432b656cc9'.toLowerCase(), '0x28D4FE67c68d340fe66CfbCBe8e2cd279d8AA6dD'.toLowerCase()],
 ]);
 
-const CURRENT_PROPOSAL = '0x274f13b610d1355058b5a5e279f6fa057c904531c6d481afe264d5c17baaffed';
+const CURRENT_PROPOSAL = '0x7e0a1851b24e9d39f4600125b5c04bfad02873dc7fa6398c493bb6e33e51d96f';
 
 async function main() {
   const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
