@@ -38,14 +38,14 @@ export class BalStakingDoHardWork extends DoHardWorkLoopBase {
 
     // add reward to distributor
     await TimeUtils.advanceBlocksOnTs(60 * 60 * 24 * 7);
-    const amount = parseUnits('100');
+    const amount = parseUnits('100000');
     await TokenUtils.getToken(EthAddresses.BAL_TOKEN, this.signer.address, amount);
     await IERC20__factory.connect(EthAddresses.BAL_TOKEN, this.signer).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amount);
     await IFeeDistributor__factory.connect(EthAddresses.BALANCER_FEE_DISTRIBUTOR, this.signer).depositToken(EthAddresses.BAL_TOKEN, amount);
 
-    await TokenUtils.getToken(EthAddresses.bbUSD_NEW_TOKEN, this.signer.address, amount);
-    await IERC20__factory.connect(EthAddresses.bbUSD_NEW_TOKEN, this.signer).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amount);
-    await IFeeDistributor__factory.connect(EthAddresses.BALANCER_FEE_DISTRIBUTOR, this.signer).depositToken(EthAddresses.bbUSD_NEW_TOKEN, amount);
+    await TokenUtils.getToken(EthAddresses.bbUSD_NEW2_TOKEN, this.signer.address, amount);
+    await IERC20__factory.connect(EthAddresses.bbUSD_NEW2_TOKEN, this.signer).approve(EthAddresses.BALANCER_FEE_DISTRIBUTOR, amount);
+    await IFeeDistributor__factory.connect(EthAddresses.BALANCER_FEE_DISTRIBUTOR, this.signer).depositToken(EthAddresses.bbUSD_NEW2_TOKEN, amount);
   }
 
   protected async enterToVault() {

@@ -16,6 +16,7 @@ import "@tetu_io/tetu-contracts/contracts/base/strategies/ProxyStrategyBase.sol"
 import "./IBalLocker.sol";
 import "@tetu_io/tetu-contracts/contracts/base/SlotsLib.sol";
 import "../../third_party/balancer/IBVault.sol";
+import "../../interfaces/ITetuLiquidator.sol";
 
 /// @title Base contract for BAL stake into veBAL pool
 /// @author belbix
@@ -28,19 +29,26 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "BalStakingStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.1.1";
+  string public constant VERSION = "1.2.0";
   /// @dev 0% buybacks, all should be done on polygon
   ///      Probably we will change it later
   uint256 private constant _BUY_BACK_RATIO = 0;
 
   address internal constant _BAL_TOKEN = 0xba100000625a3754423978a60c9317c58a424e3D;
   address internal constant _WETH_TOKEN = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-  address internal constant _wstETH_TOKEN = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
-  address internal constant _BB_USD_TOKEN = 0xA13a9247ea42D743238089903570127DdA72fE44;
   address internal constant _BALANCER_VAULT = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
-  bytes32 internal constant _wstETH_BB_USD_POOL_ID = 0x25accb7943fd73dda5e23ba6329085a3c24bfb6a000200000000000000000387;
-  bytes32 internal constant _wstETH_WETH_ID = 0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080;
-  bytes32 internal constant _WETH_BAL_POOL_ID = 0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014;
+
+  address internal constant _BB_USD_TOKEN = 0xfeBb0bbf162E64fb9D0dfe186E517d84C395f016;
+  bytes32 internal constant _BB_USD_ID = 0xfebb0bbf162e64fb9d0dfe186e517d84c395f016000000000000000000000502;
+
+  address internal constant _BB_A_USDT_TOKEN = 0xA1697F9Af0875B63DdC472d6EeBADa8C1fAB8568;
+  address internal constant _BB_A_DAI_TOKEN = 0x6667c6fa9f2b3Fc1Cc8D85320b62703d938E4385;
+  address internal constant _BB_A_USDC_TOKEN = 0xcbFA4532D8B2ade2C261D3DD5ef2A2284f792692;
+  bytes32 internal constant _BB_A_USDC_ID = 0xcbfa4532d8b2ade2c261d3dd5ef2a2284f7926920000000000000000000004fa;
+
+  address internal constant _USDC_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+  ITetuLiquidator internal constant LIQUIDATOR = ITetuLiquidator(0x90351d15F036289BE9b1fd4Cb0e2EeC63a9fF9b0);
 
   bytes32 internal constant _VE_LOCKER_KEY = bytes32(uint256(keccak256("s.ve_locker")) - 1);
   bytes32 internal constant _DEPOSITOR_KEY = bytes32(uint256(keccak256("s.depositor")) - 1);
@@ -116,66 +124,31 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
     uint bbUsdAmount = IERC20(_BB_USD_TOKEN).balanceOf(address(this));
 
     if (bbUsdAmount != 0) {
+      _balancerSwap(_BB_USD_ID, _BB_USD_TOKEN, _BB_A_USDC_TOKEN, bbUsdAmount);
+      uint bbUSDCBalance = IERC20(_BB_A_USDC_TOKEN).balanceOf(address(this));
 
-      // bbUSD token already have max allowance for balancer vault
+      if (bbUSDCBalance != 0) {
+        _balancerSwap(_BB_A_USDC_ID, _BB_A_USDC_TOKEN, _USDC_TOKEN, bbUSDCBalance);
 
-      IBVault.BatchSwapStep[] memory swaps = new IBVault.BatchSwapStep[](3);
+        uint usdcBalance = IERC20(_USDC_TOKEN).balanceOf(address(this));
 
-      IAsset[] memory assets = new IAsset[](4);
-      assets[0] = IAsset(_BB_USD_TOKEN);
-      assets[1] = IAsset(_wstETH_TOKEN);
-      assets[2] = IAsset(_WETH_TOKEN);
-      assets[3] = IAsset(_BAL_TOKEN);
+        if (usdcBalance != 0) {
+          _approveIfNeed(_USDC_TOKEN, address(LIQUIDATOR), usdcBalance);
+          LIQUIDATOR.liquidate(_USDC_TOKEN, _WETH_TOKEN, usdcBalance, 5_000);
 
-      IBVault.FundManagement memory fundManagement = IBVault.FundManagement({
-        sender: address(this),
-        fromInternalBalance: false,
-        recipient: payable(_depositor),
-        toInternalBalance: false
-      });
+          uint wethBalance = IERC20(_WETH_TOKEN).balanceOf(address(this));
 
-      int256[] memory limits = new int256[](4);
-      limits[0] = type(int256).max;
-      limits[1] = type(int256).max;
-      limits[2] = type(int256).max;
-      limits[3] = type(int256).max;
+          if (wethBalance != 0) {
+            _approveIfNeed(_WETH_TOKEN, address(LIQUIDATOR), wethBalance);
+            LIQUIDATOR.liquidate(_WETH_TOKEN, _BAL_TOKEN, wethBalance, 5_000);
 
-      // set first step
-      swaps[0] = IBVault.BatchSwapStep({
-        poolId: _wstETH_BB_USD_POOL_ID,
-        assetInIndex: 0,
-        assetOutIndex: 1,
-        amount: bbUsdAmount,
-        userData: ""
-      });
-
-      // set second step
-      swaps[1] = IBVault.BatchSwapStep({
-        poolId: _wstETH_WETH_ID,
-        assetInIndex: 1,
-        assetOutIndex: 2,
-        amount: 0,
-        userData: ""
-      });
-
-      // set third step
-      swaps[2] = IBVault.BatchSwapStep({
-        poolId: _WETH_BAL_POOL_ID,
-        assetInIndex: 2,
-        assetOutIndex: 3,
-        amount: 0,
-        userData: ""
-      });
-
-      IBVault(_BALANCER_VAULT).batchSwap(
-        IBVault.SwapKind.GIVEN_IN,
-        swaps,
-        assets,
-        fundManagement,
-        limits,
-        block.timestamp
-      );
-
+            uint balBalance = IERC20(_BAL_TOKEN).balanceOf(address(this));
+            if (balBalance != 0) {
+              IERC20(_BAL_TOKEN).safeTransfer(_depositor, balBalance);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -219,4 +192,36 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
     // noop
   }
 
+  //////////////// INTERNAL /////////////////
+
+  /// @dev Swap _tokenIn to _tokenOut using pool identified by _poolId
+  function _balancerSwap(bytes32 _poolId, address _tokenIn, address _tokenOut, uint _amountIn) internal {
+    if (_amountIn != 0) {
+      IBVault.SingleSwap memory singleSwapData = IBVault.SingleSwap({
+        poolId: _poolId,
+        kind: IBVault.SwapKind.GIVEN_IN,
+        assetIn: IAsset(_tokenIn),
+        assetOut: IAsset(_tokenOut),
+        amount: _amountIn,
+        userData: ""
+      });
+
+      IBVault.FundManagement memory fundManagementStruct = IBVault.FundManagement({
+        sender: address(this),
+        fromInternalBalance: false,
+        recipient: payable(address(this)),
+        toInternalBalance: false
+      });
+
+      _approveIfNeed(_tokenIn, _BALANCER_VAULT, _amountIn);
+      IBVault(_BALANCER_VAULT).swap(singleSwapData, fundManagementStruct, 1, block.timestamp);
+    }
+  }
+
+  function _approveIfNeed(address token, address dst, uint amount) internal {
+    if (IERC20(token).allowance(address(this), dst) < amount) {
+      IERC20(token).safeApprove(dst, 0);
+      IERC20(token).safeApprove(dst, type(uint).max);
+    }
+  }
 }

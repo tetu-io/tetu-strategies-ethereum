@@ -38,6 +38,7 @@ export class TokenUtils {
     [EthAddresses.BALANCER_STG_bbaUSD, EthAddresses.BALANCER_STG_bbaUSD_GAUGE.toLowerCase()], // gauge
     [EthAddresses.BALANCER_wUSDR_USDC, EthAddresses.BALANCER_wUSDR_USDC_GAUGE.toLowerCase()], // gauge
     [EthAddresses.bbUSD_NEW_TOKEN, EthAddresses.BALANCER_VAULT.toLowerCase()],
+    [EthAddresses.bbUSD_NEW2_TOKEN, EthAddresses.BALANCER_VAULT.toLowerCase()],
   ]);
 
   public static async balanceOf(tokenAddress: string, account: string): Promise<BigNumber> {

@@ -9,7 +9,7 @@ import {VaultUtils} from "../VaultUtils";
 import {TimeUtils} from "../TimeUtils";
 import {expect} from "chai";
 import {PriceCalculatorUtils} from "../PriceCalculatorUtils";
-import {formatUnits} from "ethers/lib/utils";
+import {formatUnits, parseUnits} from "ethers/lib/utils";
 import {EthAddresses} from "../../scripts/addresses/EthAddresses";
 
 
@@ -98,7 +98,7 @@ export class DoHardWorkLoopBase {
   protected async initialCheckVault() {
     if (this.vaultRt !== Misc.ZERO_ADDRESS) {
       const rt = (await this.vault.rewardTokens())[0];
-      if(rt) {
+      if (rt) {
         expect(rt.toLowerCase()).eq(this.vaultRt.toLowerCase());
       }
     }
@@ -422,6 +422,9 @@ export class DoHardWorkLoopBase {
   }
 
   private async getPrice(token: string): Promise<BigNumber> {
+    if (token.toLowerCase() === EthAddresses.bbUSD_NEW2_TOKEN) {
+      return parseUnits('1');
+    }
     console.log('getPrice', token)
     token = token.toLowerCase();
     if (this.priceCache.has(token)) {

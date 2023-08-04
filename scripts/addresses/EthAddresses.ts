@@ -17,6 +17,7 @@ export class EthAddresses {
   public static veBAL_TOKEN = "0xC128a9954e6c874eA3d62ce62B468bA073093F25".toLowerCase();
   public static bbUSD_TOKEN = "0x7B50775383d3D6f0215A8F290f2C9e2eEBBEceb2".toLowerCase();
   public static bbUSD_NEW_TOKEN = "0xA13a9247ea42D743238089903570127DdA72fE44".toLowerCase();
+  public static bbUSD_NEW2_TOKEN = "0xfeBb0bbf162E64fb9D0dfe186E517d84C395f016".toLowerCase();
   public static wstETH_TOKEN = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0".toLowerCase();
   public static LIDO_TOKEN = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32".toLowerCase();
   public static bbaUSDC_TOKEN = "0x82698aeCc9E28e9Bb27608Bd52cF57f704BD1B83".toLowerCase();
