@@ -30,7 +30,7 @@ contract StrategyBalStaking is BalStakingStrategyBase {
     _assets.push(_BAL_TOKEN);
     _assets.push(_WETH_TOKEN);
     _poolRewards.push(_BAL_TOKEN);
-    _poolRewards.push(_BB_USD_TOKEN);
+    _poolRewards.push(_USDC_TOKEN);
     BalStakingStrategyBase.initializeStrategy(
       controller_,
       _BPT_BAL_WETH,

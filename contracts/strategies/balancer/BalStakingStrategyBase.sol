@@ -29,7 +29,7 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
   string public constant override STRATEGY_NAME = "BalStakingStrategyBase";
   /// @notice Version of the contract
   /// @dev Should be incremented when contract changed
-  string public constant VERSION = "1.2.0";
+  string public constant VERSION = "1.2.1";
   /// @dev 0% buybacks, all should be done on polygon
   ///      Probably we will change it later
   uint256 private constant _BUY_BACK_RATIO = 0;
@@ -37,14 +37,6 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
   address internal constant _BAL_TOKEN = 0xba100000625a3754423978a60c9317c58a424e3D;
   address internal constant _WETH_TOKEN = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
   address internal constant _BALANCER_VAULT = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
-
-  address internal constant _BB_USD_TOKEN = 0xfeBb0bbf162E64fb9D0dfe186E517d84C395f016;
-  bytes32 internal constant _BB_USD_ID = 0xfebb0bbf162e64fb9d0dfe186e517d84c395f016000000000000000000000502;
-
-  address internal constant _BB_A_USDT_TOKEN = 0xA1697F9Af0875B63DdC472d6EeBADa8C1fAB8568;
-  address internal constant _BB_A_DAI_TOKEN = 0x6667c6fa9f2b3Fc1Cc8D85320b62703d938E4385;
-  address internal constant _BB_A_USDC_TOKEN = 0xcbFA4532D8B2ade2C261D3DD5ef2A2284f792692;
-  bytes32 internal constant _BB_A_USDC_ID = 0xcbfa4532d8b2ade2c261d3dd5ef2a2284f7926920000000000000000000004fa;
 
   address internal constant _USDC_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
@@ -117,39 +109,29 @@ abstract contract BalStakingStrategyBase is ProxyStrategyBase {
     rtToClaim[0] = IERC20(_BAL_TOKEN);
     IBalLocker(_VE_LOCKER_KEY.getAddress()).claimVeRewards(rtToClaim, _depositor);
 
-    // claim bb-usd rewards
-    rtToClaim[0] = IERC20(_BB_USD_TOKEN);
+    // claim usdc rewards
+    rtToClaim[0] = IERC20(_USDC_TOKEN);
     IBalLocker(_VE_LOCKER_KEY.getAddress()).claimVeRewards(rtToClaim, address(this));
 
-    uint bbUsdAmount = IERC20(_BB_USD_TOKEN).balanceOf(address(this));
+    uint usdcBalance = IERC20(_USDC_TOKEN).balanceOf(address(this));
 
-    if (bbUsdAmount != 0) {
-      _balancerSwap(_BB_USD_ID, _BB_USD_TOKEN, _BB_A_USDC_TOKEN, bbUsdAmount);
-      uint bbUSDCBalance = IERC20(_BB_A_USDC_TOKEN).balanceOf(address(this));
+    if (usdcBalance != 0) {
+      _approveIfNeed(_USDC_TOKEN, address(LIQUIDATOR), usdcBalance);
+      LIQUIDATOR.liquidate(_USDC_TOKEN, _WETH_TOKEN, usdcBalance, 5_000);
 
-      if (bbUSDCBalance != 0) {
-        _balancerSwap(_BB_A_USDC_ID, _BB_A_USDC_TOKEN, _USDC_TOKEN, bbUSDCBalance);
+      uint wethBalance = IERC20(_WETH_TOKEN).balanceOf(address(this));
 
-        uint usdcBalance = IERC20(_USDC_TOKEN).balanceOf(address(this));
+      if (wethBalance != 0) {
+        _approveIfNeed(_WETH_TOKEN, address(LIQUIDATOR), wethBalance);
+        LIQUIDATOR.liquidate(_WETH_TOKEN, _BAL_TOKEN, wethBalance, 5_000);
 
-        if (usdcBalance != 0) {
-          _approveIfNeed(_USDC_TOKEN, address(LIQUIDATOR), usdcBalance);
-          LIQUIDATOR.liquidate(_USDC_TOKEN, _WETH_TOKEN, usdcBalance, 5_000);
-
-          uint wethBalance = IERC20(_WETH_TOKEN).balanceOf(address(this));
-
-          if (wethBalance != 0) {
-            _approveIfNeed(_WETH_TOKEN, address(LIQUIDATOR), wethBalance);
-            LIQUIDATOR.liquidate(_WETH_TOKEN, _BAL_TOKEN, wethBalance, 5_000);
-
-            uint balBalance = IERC20(_BAL_TOKEN).balanceOf(address(this));
-            if (balBalance != 0) {
-              IERC20(_BAL_TOKEN).safeTransfer(_depositor, balBalance);
-            }
-          }
+        uint balBalance = IERC20(_BAL_TOKEN).balanceOf(address(this));
+        if (balBalance != 0) {
+          IERC20(_BAL_TOKEN).safeTransfer(_depositor, balBalance);
         }
       }
     }
+
   }
 
   /// @dev Stake underlying to the pool with maximum lock period
