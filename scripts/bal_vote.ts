@@ -3,7 +3,7 @@ import {DeployerUtilsLocal} from "./deploy/DeployerUtilsLocal";
 import {BalLocker__factory, IGaugeController__factory} from "../typechain";
 import {
   gaugeAdrToName,
-  getGaugesJSON,
+  getBalancerGaugesData,
   getSnapshotData,
   poolNameToGaugeAdr
 } from "./utils/voting-utils";
@@ -17,19 +17,21 @@ type VOTE = {
 }
 
 const changeVoteTo = new Map<string, string>([
-  // ['0xE629c43BCad1029E12ED51432B9dd3432b656cc9'.toLowerCase(), '0x28D4FE67c68d340fe66CfbCBe8e2cd279d8AA6dD'.toLowerCase()],
+  // ['0xd1177e2157a7fd6a0484b79f8e50e8a9305f8063'.toLowerCase(), '0x7342DD5970d9151850386fD4Df286fD85EA4917f'.toLowerCase()],
 ]);
 
-const CURRENT_PROPOSAL = '0x2f4d1709f19291a97db05874f747844f05502c74600cdd19c2b7a3b456d8f4aa';
+// https://snapshot.org/#/tetubal.eth
+const CURRENT_PROPOSAL = '0xd51f6821c1765d594d21d25636e75d0f3b2843fb7c503d7a763fe2c278d03eba';
 
 async function main() {
   const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
   const balLocker = BalLocker__factory.connect('0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce', signer);
 
   const snapshotData = await getSnapshotData(CURRENT_PROPOSAL)
-  console.log('CURRENT PROPOSAL', snapshotData.title);
-
   const curDate = Math.floor(new Date().getTime() / 1000);
+
+  console.log('CURRENT PROPOSAL', snapshotData.title, snapshotData.end);
+
   if (+snapshotData.end > curDate || (curDate - +snapshotData.end) > 60 * 60 * 24 * 3) throw new Error('Wrong proposal');
 
   const sumScores = snapshotData.scores.reduce((a: string, b: string) => +a + +b);
@@ -37,7 +39,7 @@ async function main() {
   const votesFromCurrentProposal: VOTE[] = []
   console.log('sumScores', sumScores)
 
-  const gauges = await getGaugesJSON();
+  const balData = await getBalancerGaugesData();
 
   let sumPercent = 0;
   for (let i = 0; i < snapshotData.choices.length; ++i) {
@@ -48,7 +50,7 @@ async function main() {
     }
     sumPercent += vote;
     // console.log(pool, vote)
-    let gaugeAdr = poolNameToGaugeAdr(pool, gauges);
+    let gaugeAdr = poolNameToGaugeAdr(pool, balData);
     if (changeVoteTo.has(gaugeAdr)) {
       console.log('POOL CHANGED!', pool, vote)
       gaugeAdr = changeVoteTo.get(gaugeAdr) ?? 'ERROR';
@@ -64,7 +66,7 @@ async function main() {
 
   const gaugeController = await balLocker.gaugeController();
 
-  const allGaugesAdr: string[] = gauges.map((g: any) => g['address']);
+  const allGaugesAdr: string[] = balData.map((g: any) => g.gauge.address);
 
   const prevVotes = new Map<string, number>();
   for (const gauge of Array.from(allGaugesAdr)) {
@@ -76,7 +78,7 @@ async function main() {
 
   console.log('----------- Previous votes -------------------------------------------------------------')
   for (const gauge of Array.from(prevVotes.keys())) {
-    console.log(gaugeAdrToName(gauge, gauges), '=>', ((prevVotes.get(gauge) ?? 0) / 100) + '%');
+    console.log(gaugeAdrToName(gauge, balData), '=>', ((prevVotes.get(gauge) ?? 0) / 100) + '%');
   }
   console.log('-----------------------------------------------------------------------------------')
 
@@ -91,21 +93,21 @@ async function main() {
       const prevVote = prevVotes.get(v.gaugeAdr.toLowerCase()) ?? 0
       const currVote = v.vote;
       if (prevVote > currVote) {
-        console.log('vote exist in prev and has vote in curr, and it is lower', gaugeAdrToName(v.gaugeAdr, gauges), v.gaugeAdr)
+        console.log('vote exist in prev and has vote in curr, and it is lower', gaugeAdrToName(v.gaugeAdr, balData), v.gaugeAdr)
         existVotesLowered.push(v)
       } else {
-        console.log('vote exist in prev and has vote in curr, and it is higher', gaugeAdrToName(v.gaugeAdr, gauges), v.gaugeAdr)
+        console.log('vote exist in prev and has vote in curr, and it is higher', gaugeAdrToName(v.gaugeAdr, balData), v.gaugeAdr)
         existVotes.push(v)
       }
     } else {
-      console.log('vote do not exist in prev', gaugeAdrToName(v.gaugeAdr, gauges), v.gaugeAdr)
+      console.log('vote do not exist in prev', gaugeAdrToName(v.gaugeAdr, balData), v.gaugeAdr)
       nonExistVotes.push(v);
     }
   });
 
   Array.from(prevVotes.keys()).forEach(v => {
     if (!currentVotesMap.has(v.toLowerCase())) {
-      console.log('vote exist in prev BUT do not have vote in curr', gaugeAdrToName(v, gauges), v)
+      console.log('vote exist in prev BUT do not have vote in curr', gaugeAdrToName(v, balData), v)
       zeroVotes.push({
         gaugeAdr: v.toLowerCase(),
         vote: 0,
@@ -170,7 +172,7 @@ async function main() {
 
   console.log('----------- Expected New votes -------------------------------------------------------------')
   for (const gauge of Array.from(votesMap.keys())) {
-    console.log(gaugeAdrToName(gauge, gauges), '=>', ((votesMap.get(gauge) ?? 0) / 100) + '%');
+    console.log(gaugeAdrToName(gauge, balData), '=>', ((votesMap.get(gauge) ?? 0) / 100) + '%');
   }
   console.log('----- CREATE TX WITH THIS DATA voteForManyGagues------------------------------------------------------------------------------')
 
