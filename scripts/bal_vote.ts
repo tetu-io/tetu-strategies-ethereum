@@ -21,7 +21,7 @@ const changeVoteTo = new Map<string, string>([
 ]);
 
 // https://snapshot.org/#/tetubal.eth
-const CURRENT_PROPOSAL = '0xd51f6821c1765d594d21d25636e75d0f3b2843fb7c503d7a763fe2c278d03eba';
+const CURRENT_PROPOSAL = '0xbd2a8bf40f4e9e8859cf4bc30848e650d65f9c55d3864489d1c7c01d216e35e8';
 
 async function main() {
   const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');

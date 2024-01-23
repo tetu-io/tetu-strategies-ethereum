@@ -76,7 +76,8 @@ export function poolNameToGaugeAdr(poolName: string, balData: any[]): string {
     const poolNameConct = poolName.split('(0x')[0].trim();
     // tslint:disable-next-line:no-any
     const element = Array.from(balData).filter((el: any) => {
-      const adr: string = el.address;
+      // console.log(el)
+      const adr: string = el.gauge.address;
       return adr.slice(0, 8).toLowerCase() === poolAdrConct.toLowerCase(); // todo change to gauge
     });
     if (element.length > 1) {
@@ -88,8 +89,7 @@ export function poolNameToGaugeAdr(poolName: string, balData: any[]): string {
           freshest = el;
         }
       }
-      // todo move back
-      // throw new Error('collision');
+      throw new Error('collision');
     }
     if (element.length === 0) throw new Error('no gauge');
     return element[0].gauge.address.toLowerCase();
