@@ -34,10 +34,10 @@ contract TetuBalExtender {
     maxGas = _maxGas;
   }
 
-  function extend(uint amount) external {
-    require(msg.sender == operator, "NOT_OPERATOR");
-    BALANCER_BAL_WETH.safeTransfer(address(BAL_LOCKER), amount);
-    BAL_LOCKER.depositVe(amount);
+  function extend() external {
+    require(msg.sender == operator || msg.sender == owner, "NOT_OPERATOR");
+    BALANCER_BAL_WETH.safeTransfer(address(BAL_LOCKER), 1);
+    BAL_LOCKER.depositVe(1);
     lastCall = block.timestamp;
   }
 

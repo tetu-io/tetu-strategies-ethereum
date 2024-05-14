@@ -21,34 +21,32 @@ const changeVoteTo = new Map<string, string>([
 ]);
 
 // https://snapshot.org/#/tetubal.eth
-const CURRENT_PROPOSAL = '0xbd2a8bf40f4e9e8859cf4bc30848e650d65f9c55d3864489d1c7c01d216e35e8';
+const CURRENT_PROPOSAL = '0xf97f0fd89ee27edcdf4cebb45dbcd637b13e236e2cebeeee6291aa893d457e5d';
+const DUPLICATE_PROPOSAL = '';
 
-async function main() {
-  const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
-  const balLocker = BalLocker__factory.connect('0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce', signer);
-
-  const snapshotData = await getSnapshotData(CURRENT_PROPOSAL)
+async function getProposalData(hash: string) {
+  const snapshotData = await getSnapshotData(hash)
   const curDate = Math.floor(new Date().getTime() / 1000);
 
-  console.log('CURRENT PROPOSAL', snapshotData.title, snapshotData.end);
+  console.log('PROPOSAL', snapshotData.title, snapshotData.end);
 
-  if (+snapshotData.end > curDate || (curDate - +snapshotData.end) > 60 * 60 * 24 * 3) throw new Error('Wrong proposal');
+  if (+snapshotData.end > curDate || (curDate - +snapshotData.end) > 60 * 60 * 24 * 3) throw new Error('Wrong proposal ' + hash);
+  return snapshotData;
+}
 
-  const sumScores = snapshotData.scores.reduce((a: string, b: string) => +a + +b);
-  const currentVotesMap = new Map<string, number>();
-  const votesFromCurrentProposal: VOTE[] = []
-  console.log('sumScores', sumScores)
-
-  const balData = await getBalancerGaugesData();
-
-  let sumPercent = 0;
+async function calcVotes(
+  currentVotesMap: Map<string, number>,
+  votesFromCurrentProposal: VOTE[],
+  snapshotData: any,
+  balData: any,
+  totalSumScore: number,
+) {
   for (let i = 0; i < snapshotData.choices.length; ++i) {
     const pool = snapshotData.choices[i];
-    const vote = Math.round((snapshotData.scores[i] / sumScores) * 100_00);
+    const vote = Math.round((snapshotData.scores[i] / totalSumScore) * 100_00);
     if (+vote === 0) {
       continue;
     }
-    sumPercent += vote;
     // console.log(pool, vote)
     let gaugeAdr = poolNameToGaugeAdr(pool, balData);
     if (changeVoteTo.has(gaugeAdr)) {
@@ -62,7 +60,53 @@ async function main() {
       vote,
     });
   }
+}
+
+async function collectVotesFromProposal(snapshotData: any, snapshotDataDuplicate: any, balData: any) {
+
+  const sumScores = snapshotData.scores.reduce((a: string, b: string) => +a + +b);
+  const currentVotesMap = new Map<string, number>();
+  const votesFromCurrentProposal: VOTE[] = []
+  console.log('sumScores', snapshotData.title, sumScores)
+
+  let totalSumScore = sumScores;
+  if (!!snapshotDataDuplicate) {
+    const sumScoresDuplicate = snapshotDataDuplicate.scores.reduce((a: string, b: string) => +a + +b);
+    console.log('sumScoresDuplicate', snapshotDataDuplicate.title, sumScoresDuplicate)
+    totalSumScore = sumScores + sumScoresDuplicate;
+  }
+
+  console.log('TOTAL SCORES:', totalSumScore)
+
+  await calcVotes(currentVotesMap, votesFromCurrentProposal, snapshotData, balData, totalSumScore);
+
+  if (!!snapshotDataDuplicate) {
+    await calcVotes(currentVotesMap, votesFromCurrentProposal, snapshotDataDuplicate, balData, totalSumScore);
+  }
+
+
   votesFromCurrentProposal.sort((a, b) => a.vote > b.vote ? 1 : -1);
+
+  console.log('votes collected')
+  return {votesFromCurrentProposal, currentVotesMap};
+}
+
+async function main() {
+  const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
+  const balLocker = BalLocker__factory.connect('0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce', signer);
+
+  const snapshotData = await getProposalData(CURRENT_PROPOSAL)
+  let snapshotDataDuplicate;
+  if(DUPLICATE_PROPOSAL && String(DUPLICATE_PROPOSAL).trim() !== '') {
+    snapshotDataDuplicate = await getProposalData(DUPLICATE_PROPOSAL)
+  }
+
+  const balData = await getBalancerGaugesData();
+
+  const {
+    votesFromCurrentProposal,
+    currentVotesMap
+  } = await collectVotesFromProposal(snapshotData, snapshotDataDuplicate, balData);
 
   const gaugeController = await balLocker.gaugeController();
 
