@@ -7,6 +7,17 @@ import {
   getSnapshotData,
   poolNameToGaugeAdr
 } from "./utils/voting-utils";
+import {config as dotEnvConfig} from "dotenv";
+
+dotEnvConfig();
+// tslint:disable-next-line:no-var-requires
+const argv = require('yargs/yargs')()
+  .env('')
+  .options({
+    proposal: {
+      type: "string",
+    },
+  }).argv;
 
 // https://forum.balancer.fi/c/vebal/13
 // https://github.com/balancer-labs/frontend-v2/blob/master/src/data/voting-gauges.json
@@ -21,7 +32,7 @@ const changeVoteTo = new Map<string, string>([
 ]);
 
 // https://snapshot.org/#/tetubal.eth
-const CURRENT_PROPOSAL = '0xf97f0fd89ee27edcdf4cebb45dbcd637b13e236e2cebeeee6291aa893d457e5d';
+// const CURRENT_PROPOSAL = '0xefe92697d32d9e90782b215f432532d1a4ec84519b585afac87f6d65db81765d';
 const DUPLICATE_PROPOSAL = '';
 
 async function getProposalData(hash: string) {
@@ -95,7 +106,7 @@ async function main() {
   const signer = await DeployerUtilsLocal.impersonate('0x84169ea605619C16cc1e414AaD54C95ee1a5dA12');
   const balLocker = BalLocker__factory.connect('0x9cC56Fa7734DA21aC88F6a816aF10C5b898596Ce', signer);
 
-  const snapshotData = await getProposalData(CURRENT_PROPOSAL)
+  const snapshotData = await getProposalData(argv.proposal)
   let snapshotDataDuplicate;
   if(DUPLICATE_PROPOSAL && String(DUPLICATE_PROPOSAL).trim() !== '') {
     snapshotDataDuplicate = await getProposalData(DUPLICATE_PROPOSAL)
