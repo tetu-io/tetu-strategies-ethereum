@@ -7,7 +7,7 @@ import "@nomiclabs/hardhat-solhint";
 import "@typechain/hardhat";
 import "hardhat-contract-sizer";
 import "hardhat-gas-reporter";
-import "hardhat-tracer";
+// import "hardhat-tracer";
 import "solidity-coverage"
 import "hardhat-abi-exporter"
 import {task} from "hardhat/config";
